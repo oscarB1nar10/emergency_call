@@ -30,6 +30,11 @@ dependencies:
   flutter:
     sdk: flutter
 
+  permission_handler: ^8.3.0
+  contacts_service: ^0.6.3
+  telephony: ^0.1.4
+  location: ^4.2.0
+
 
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
@@ -56,6 +61,9 @@ flutter:
   # included with your application, so that you can use the icons in
   # the material Icons class.
   uses-material-design: true
+  assets:
+    - assets/emergency_call.png
+    - assets/help.png
 
   # To add assets to your application, add an assets section, like this:
   # assets:
