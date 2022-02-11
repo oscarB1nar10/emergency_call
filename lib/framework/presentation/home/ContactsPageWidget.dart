@@ -1,9 +1,10 @@
 import 'dart:typed_data';
 
 import 'package:contacts_service/contacts_service.dart';
+import 'package:emergency_call/framework/presentation/utility/Strings.dart';
 import 'package:flutter/material.dart';
 
-import 'model/PersonalContact.dart';
+import '../model/PersonalContact.dart';
 
 class ContactsPage extends StatefulWidget {
   const ContactsPage({Key? key}) : super(key: key);
@@ -25,7 +26,7 @@ class _ContactsPageState extends State<ContactsPage> {
   Widget build(BuildContext context) {
     return Scaffold(
         appBar: AppBar(
-          title: (Text('Contacts')),
+          title: (const Text(Strings.contacts)),
         ),
         //Build a list view of all contacts, displaying their avatar and
         // display name
@@ -74,6 +75,7 @@ class _ContactsPageState extends State<ContactsPage> {
     Navigator.pop(
         context,
         PersonalContact(
-            contact.displayName ?? '', contact.phones?.first.value ?? ''));
+            name: contact.displayName ?? '',
+            phone: contact.phones?.first.value ?? ''));
   }
 }

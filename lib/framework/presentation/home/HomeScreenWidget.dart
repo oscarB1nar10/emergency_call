@@ -1,9 +1,16 @@
-import 'package:emergency_call/framework/presentation/ContactsPageWidget.dart';
+import 'package:emergency_call/domain/model/FavoriteContact.dart';
+import 'package:emergency_call/framework/presentation/home/ContactsPageWidget.dart';
+import 'package:emergency_call/framework/presentation/home/HomeBloc.dart';
+import 'package:emergency_call/framework/presentation/home/HomeEvents.dart';
 import 'package:emergency_call/framework/presentation/model/PersonalContact.dart';
+import 'package:emergency_call/framework/presentation/utility/Strings.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:location/location.dart';
 import 'package:permission_handler/permission_handler.dart' as permissions;
 import 'package:telephony/telephony.dart';
+
+import 'HomeState.dart';
 
 class HomeScreenWidget extends StatefulWidget {
   const HomeScreenWidget({Key? key}) : super(key: key);
@@ -13,7 +20,7 @@ class HomeScreenWidget extends StatefulWidget {
 }
 
 class _HomeScreenWidget extends State<HomeScreenWidget> {
-  PersonalContact personalContact = const PersonalContact("", "");
+  var personalContact = const PersonalContact();
   final telephony = Telephony.instance;
   final location = Location.instance;
 
@@ -22,7 +29,11 @@ class _HomeScreenWidget extends State<HomeScreenWidget> {
       if (status == SendStatus.SENT) {
         ScaffoldMessenger.of(context)
           ..removeCurrentSnackBar()
-          ..showSnackBar(const SnackBar(content: Text("Message sent")));
+          ..showSnackBar(const SnackBar(content: Text(Strings.messageSent)));
+      }else{
+        ScaffoldMessenger.of(context)
+          ..removeCurrentSnackBar()
+          ..showSnackBar(const SnackBar(content: Text(Strings.messageNotSent)));
       }
     });
   }
@@ -31,10 +42,10 @@ class _HomeScreenWidget extends State<HomeScreenWidget> {
   Widget build(BuildContext context) {
     return Scaffold(
         appBar: AppBar(
-          title: const Text("Emergency call"),
+          title: const Text(Strings.emergencyCall),
           centerTitle: true,
         ),
-        body: Center(
+        body: SingleChildScrollView(
           child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.center,
@@ -100,39 +111,73 @@ class _HomeScreenWidget extends State<HomeScreenWidget> {
 
     setState(() {
       this.personalContact = personalContact;
+
+      HomeBloc homeBloc = BlocProvider.of<HomeBloc>(context, listen: false);
+
+      // Save contact in localDB
+      homeBloc.add(EventAddFavoriteContact(
+          personalContact.fromPersonalToFavoriteContact()));
     });
   }
 
   Widget showContactInfo() {
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: [Text(personalContact.name), Text(personalContact.phone)],
-    );
-  }
+    // Launch event to retrieve saved favorite contacts.
+    HomeBloc homeBloc = BlocProvider.of<HomeBloc>(context, listen: false);
+    homeBloc.add(const EventGetFavoriteContact());
 
-  Widget showEmergencyBell() {
-    if (personalContact.phone.isNotEmpty) {
+    return BlocBuilder<HomeBloc, HomeState>(builder: (context, state) {
       return Column(
         mainAxisAlignment: MainAxisAlignment.center,
         crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          InkWell(
-            child: const Image(image: AssetImage('assets/help.png')),
-            onTap: () {
-              // Send SMS
-              triggerEmergencySMS(personalContact.name, personalContact.phone);
-            },
-          )
+        children: <Widget>[
+          if (state.favoriteContactsDataSource.isNotEmpty)
+            Center(
+              child: ListView.builder(
+                shrinkWrap: true,
+                // Let the ListView know how many items it needs to build.
+                itemCount: state.favoriteContactsDataSource.length,
+                // Provide a builder function. This is where the magic happens.
+                // Convert each item into a widget based on the type of item it is.
+                itemBuilder: (context, index) {
+                  final item = state.favoriteContactsDataSource[index];
+
+                  return ListTile(
+                    title: Text(item.name),
+                    subtitle: Text(item.phone),
+                  );
+                },
+              ),
+            )
         ],
       );
-    } else {
-      // Empty widget
-      return const SizedBox.shrink();
-    }
+    });
   }
 
-  Future<void> triggerEmergencySMS(String name, String phone) async {
+  Widget showEmergencyBell() {
+    return BlocBuilder<HomeBloc, HomeState>(builder: (context, state) {
+      if (state.favoriteContactsDataSource.isNotEmpty) {
+        return Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            InkWell(
+              child: const Image(image: AssetImage('assets/help.png')),
+              onTap: () {
+                // Send SMS
+                triggerEmergencySMS(state.favoriteContactsDataSource);
+              },
+            )
+          ],
+        );
+      } else {
+        // Empty widget
+        return const SizedBox.shrink();
+      }
+    });
+  }
+
+  Future<void> triggerEmergencySMS(
+      List<FavoriteContact> favoriteContacts) async {
     bool permissionsGranted =
         await telephony.requestPhoneAndSmsPermissions ?? false;
 
@@ -145,11 +190,12 @@ class _HomeScreenWidget extends State<HomeScreenWidget> {
       final url =
           'https://www.google.com/maps/search/?api=1&query=${locationData.latitude},${locationData.longitude}';
 
-      telephony.sendSms(
-          to: phone,
-          message:
-              "Hello $name, this is a emergency from the Emergency Call.\nYou can find to me here: $url",
-          statusListener: onSendStatus);
+      for (var favoriteContact in favoriteContacts) {
+        telephony.sendSms(
+            to: favoriteContact.phone,
+            message: Strings.messageToSend(favoriteContact.name, url),
+            statusListener: onSendStatus);
+      }
     }
   }
 }

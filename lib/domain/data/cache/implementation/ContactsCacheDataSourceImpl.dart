@@ -1,0 +1,25 @@
+
+import 'package:emergency_call/domain/data/cache/abstraction/ContactsCacheDataSource.dart';
+import 'package:emergency_call/domain/model/FavoriteContact.dart';
+import 'package:emergency_call/framework/data_source/implementation/ContactsCacheImplementation.dart';
+
+class ContactsCacheDataSourceImpl implements ContactsCacheDataSource {
+  final ContactsCacheImplementation _contactsCacheImplementation =
+      ContactsCacheImplementation();
+
+  @override
+  Future addFavoriteContact(FavoriteContact contact) {
+    return _contactsCacheImplementation.addFavoriteContact(contact);
+  }
+
+  @override
+  Future getFavoriteContacts() {
+    return _contactsCacheImplementation.getFavoriteContacts();
+  }
+
+  @override
+  Future removeFavoriteContact(int id) {
+    // TODO: implement removeFavoriteContact
+    throw UnimplementedError();
+  }
+}
