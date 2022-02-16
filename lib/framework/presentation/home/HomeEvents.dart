@@ -25,8 +25,8 @@ class EventGetFavoriteContact extends HomeEvents {
   const EventGetFavoriteContact();
 }
 
-/*enum HomeEvents {
-  ADD_FAVORITE_CONTACT,
-  GET_FAVORITE_CONTACTS,
-  REMOVE_FAVORITE_CONTACT
-}*/
+class EventDeleteFavoriteContact extends HomeEvents {
+  final FavoriteContact favoriteContact;
+
+  const EventDeleteFavoriteContact(this.favoriteContact);
+}

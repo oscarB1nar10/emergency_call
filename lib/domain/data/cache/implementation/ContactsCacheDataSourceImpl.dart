@@ -18,8 +18,7 @@ class ContactsCacheDataSourceImpl implements ContactsCacheDataSource {
   }
 
   @override
-  Future removeFavoriteContact(int id) {
-    // TODO: implement removeFavoriteContact
-    throw UnimplementedError();
+  Future deleteFavoriteContact(int id) {
+    return _contactsCacheImplementation.deleteFavoriteContact(id);
   }
 }
