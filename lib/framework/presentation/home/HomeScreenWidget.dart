@@ -30,7 +30,7 @@ class _HomeScreenWidget extends State<HomeScreenWidget> {
         ScaffoldMessenger.of(context)
           ..removeCurrentSnackBar()
           ..showSnackBar(const SnackBar(content: Text(Strings.messageSent)));
-      }else{
+      } else {
         ScaffoldMessenger.of(context)
           ..removeCurrentSnackBar()
           ..showSnackBar(const SnackBar(content: Text(Strings.messageNotSent)));
@@ -41,28 +41,27 @@ class _HomeScreenWidget extends State<HomeScreenWidget> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        appBar: AppBar(
-          title: const Text(Strings.emergencyCall),
-          centerTitle: true,
-        ),
-        body: SingleChildScrollView(
-          child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                showContactInfo(),
-                Column(children: [
-                  InkWell(
-                    child: const Image(
-                        image: AssetImage('assets/emergency_call.png')),
-                    onTap: () {
-                      requestContactsPermissions(context);
-                    },
-                  ),
-                ]),
-                showEmergencyBell()
-              ]),
-        ));
+      appBar: AppBar(
+        title: const Text(Strings.emergencyCall),
+        centerTitle: true,
+      ),
+      body: SingleChildScrollView(
+        child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              showContactInfo(),
+              showEmergencyBell()
+            ]),
+      ),
+      floatingActionButton: FloatingActionButton(
+        child: const Icon(Icons.add),
+        onPressed: () {
+          requestContactsPermissions(context);
+        },
+        backgroundColor: Colors.red,
+      ),
+    );
   }
 
   Future<void> requestContactsPermissions(BuildContext context) async {
@@ -141,10 +140,34 @@ class _HomeScreenWidget extends State<HomeScreenWidget> {
                 itemBuilder: (context, index) {
                   final item = state.favoriteContactsDataSource[index];
 
-                  return ListTile(
-                    title: Text(item.name),
-                    subtitle: Text(item.phone),
-                  );
+                  return Dismissible(
+                      key: Key(index.toString()),
+                      // Show a red background as the item is swiped away.
+                      background: Container(
+                        color: Colors.deepOrangeAccent,
+                        child: Padding(
+                          padding: const EdgeInsets.all(16),
+                          child: Row(
+                            children: const [
+                              Icon(Icons.delete, color: Colors.white),
+                              Text('Delete as emergency contact',
+                                  style: TextStyle(color: Colors.white)),
+                            ],
+                          ),
+                        ),
+                      ),
+                      // Provide a function that tells the app
+                      // what to do after an item has been swiped away.
+                      onDismissed: (direction) {
+                        homeBloc.add(EventDeleteFavoriteContact(item));
+                      },
+                      child: Card(
+                          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                          child: ListTile(
+                            leading: const Icon(Icons.account_box, size: 48),
+                            title: Text(item.name),
+                            subtitle: Text(item.phone),
+                          )));
                 },
               ),
             )
