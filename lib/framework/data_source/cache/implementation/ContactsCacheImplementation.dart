@@ -1,9 +1,9 @@
 import 'dart:developer';
 
 import 'package:emergency_call/domain/model/FavoriteContact.dart';
-import 'package:emergency_call/framework/data_source/abstraction/ContactsCache.dart';
-import 'package:emergency_call/framework/data_source/implementation/dataBase.dart';
 import 'package:sqflite/sqflite.dart';
+import '../abstraction/ContactsCache.dart';
+import 'dataBase.dart';
 
 class ContactsCacheImplementation implements ContactsCache {
   final String TABLE_NAME = "favorite_contacts";
