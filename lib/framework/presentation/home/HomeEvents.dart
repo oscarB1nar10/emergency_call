@@ -1,4 +1,5 @@
 import 'package:emergency_call/domain/model/FavoriteContact.dart';
+import 'package:emergency_call/framework/presentation/utility/Countries.dart';
 import 'package:equatable/equatable.dart';
 
 abstract class HomeEvents extends Equatable {
@@ -29,4 +30,14 @@ class EventDeleteFavoriteContact extends HomeEvents {
   final FavoriteContact favoriteContact;
 
   const EventDeleteFavoriteContact(this.favoriteContact);
+}
+
+class EventSaveCountryDealCode extends HomeEvents {
+  final Country country;
+
+  const EventSaveCountryDealCode(this.country);
+}
+
+class EventGetCountryDealCode extends HomeEvents {
+  const EventGetCountryDealCode();
 }

@@ -1,7 +1,8 @@
 
 import 'package:emergency_call/domain/data/cache/abstraction/ContactsCacheDataSource.dart';
 import 'package:emergency_call/domain/model/FavoriteContact.dart';
-import 'package:emergency_call/framework/data_source/implementation/ContactsCacheImplementation.dart';
+
+import '../../../../framework/data_source/cache/implementation/ContactsCacheImplementation.dart';
 
 class ContactsCacheDataSourceImpl implements ContactsCacheDataSource {
   final ContactsCacheImplementation _contactsCacheImplementation =
