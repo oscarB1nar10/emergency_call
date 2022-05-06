@@ -5,6 +5,7 @@ class Strings {
   static const messageSent = "Message sent";
   static const messageNotSent = "Message not sent";
   static const contacts = "Contacts";
+  static const countryPicker = "Country picker";
   static const mapLocationUrl = "https://www.google.com/maps/search/?api=1&query=";
   static const countryDialCode = "+57";
 

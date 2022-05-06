@@ -1,24 +1,26 @@
+import 'dart:async';
 import 'dart:developer';
 
-import 'package:country_code_picker/country_code_picker.dart';
 import 'package:emergency_call/domain/model/FavoriteContact.dart';
 import 'package:emergency_call/framework/presentation/home/ContactsPageWidget.dart';
 import 'package:emergency_call/framework/presentation/home/HomeBloc.dart';
 import 'package:emergency_call/framework/presentation/home/HomeEvents.dart';
+import 'package:emergency_call/framework/presentation/home/LocationWidget.dart';
 import 'package:emergency_call/framework/presentation/model/PersonalContact.dart';
 import 'package:emergency_call/framework/presentation/utility/Countries.dart';
 import 'package:emergency_call/framework/presentation/utility/NetworkConnection.dart';
 import 'package:emergency_call/framework/presentation/utility/Strings.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_foreground_service/flutter_foreground_service.dart';
 import 'package:location/location.dart';
 import 'package:permission_handler/permission_handler.dart' as permissions;
-import 'package:shake/shake.dart';
 import 'package:telephony/telephony.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:whatsapp_unilink/whatsapp_unilink.dart';
 
 import '../utility/Countries.dart';
+import 'CountrySelectorWidget.dart';
 import 'HomeState.dart';
 
 class HomeScreenWidget extends StatefulWidget {
@@ -33,6 +35,7 @@ class _HomeScreenWidget extends State<HomeScreenWidget> {
   final telephony = Telephony.instance;
   final location = Location.instance;
   var showCountryCodeList = false;
+  late StreamSubscription<dynamic> _streamSubscription;
 
   onSendStatus(SendStatus status) {
     setState(() {
@@ -53,11 +56,6 @@ class _HomeScreenWidget extends State<HomeScreenWidget> {
     super.initState();
     _onGetCountryDial();
     log('initState. Initialization state');
-    ShakeDetector.autoStart(onPhoneShake: () {
-      // Do stuff on phone shake
-      HomeBloc homeBloc = BlocProvider.of<HomeBloc>(context, listen: false);
-      triggerEmergencySMS(homeBloc.state.favoriteContacts);
-    });
   }
 
   @override
@@ -71,12 +69,18 @@ class _HomeScreenWidget extends State<HomeScreenWidget> {
           onPressed: () {
             setState(() {
               showCountryCodeList = !showCountryCodeList;
+              _navigateCountryPickerPage(context);
             });
           },
         ),
+        actions: const <Widget>[LocationWidget()],
         centerTitle: true,
       ),
-      body: SingleChildScrollView(child: handleScreenContent(context)),
+      body: SingleChildScrollView(
+          child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [showContactInfo(), showEmergencyBell()])),
       floatingActionButton: FloatingActionButton(
         child: const Icon(Icons.add),
         onPressed: () {
@@ -164,7 +168,7 @@ class _HomeScreenWidget extends State<HomeScreenWidget> {
                   final item = state.favoriteContactsDataSource[index];
 
                   return Dismissible(
-                      key: Key(index.toString()),
+                      key: UniqueKey(),
                       // Show a red background as the item is swiped away.
                       background: Container(
                         color: Colors.deepOrangeAccent,
@@ -266,8 +270,9 @@ class _HomeScreenWidget extends State<HomeScreenWidget> {
     for (var favoriteContact in favoriteContacts) {
       // Remove +countryDialCode if exist
       Country country = homeBloc.state.country;
+      print('Dial code refreshed: +${country.phoneCode}');
       var number =
-          favoriteContact.phone.replaceAll("+${country.phoneCode}", "");
+          CountryHelper.phoneNumberWithoutCountryCode(favoriteContact.phone);
 
       final link = WhatsAppUnilink(
         phoneNumber: '${country.phoneCode}-$number',
@@ -279,43 +284,23 @@ class _HomeScreenWidget extends State<HomeScreenWidget> {
     }
   }
 
-  Widget handleScreenContent(BuildContext context) {
-    if (showCountryCodeList) {
-      return onCountryCode(context);
-    } else {
-      return Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [showContactInfo(), showEmergencyBell()]);
-    }
-  }
+  // A method that launches the Country picker screen and awaits the result from
+// Navigator.pop.
+  void _navigateCountryPickerPage(BuildContext context) async {
+    // Navigator.push returns a Future that completes after calling
+    // Navigator.pop on the Selection Screen.
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const CountrySelectorWidget()),
+    );
 
-  Widget onCountryCode(BuildContext context) {
-    return BlocBuilder<HomeBloc, HomeState>(builder: (context, state) {
-      print('Country: ${state.country.phoneCode}, ${state.country.isoCode}');
-      return Row(
-        mainAxisSize: MainAxisSize.max,
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Card(
-            margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            child: CountryCodePicker(
-              onChanged: (countryCode) => {_onCountryChange(countryCode)},
-              initialSelection: state.country.isoCode,
-              // Initial selection and favorite can be one of code ('IT') OR dial_code('+39')
-              favorite: ["+${state.country.phoneCode}", state.country.isoCode],
-              // optional. Shows only country name and flag
-              showCountryOnly: false,
-              // optional. Shows only country name and flag when popup is closed.
-              showOnlyCountryWhenClosed: false,
-              // optional. aligns the flag and the Text left
-              alignLeft: false,
-              showFlagDialog: true,
-            ),
-          ),
-        ],
-      );
-    });
+    Country country = result as Country;
+
+    // After the Selection of the country returns a result, hide any previous snackbars
+    // and show the new result.
+    ScaffoldMessenger.of(context)
+      ..removeCurrentSnackBar()
+      ..showSnackBar(SnackBar(content: Text(country.name)));
   }
 
   _onGetCountryDial() {
@@ -324,18 +309,10 @@ class _HomeScreenWidget extends State<HomeScreenWidget> {
     homeBloc.add(const EventGetCountryDealCode());
   }
 
-  _onCountryChange(CountryCode countryCode) {
-    HomeBloc homeBloc = BlocProvider.of<HomeBloc>(context, listen: false);
-
-    final dialCode = countryCode.dialCode ?? "";
-
-    print('Dial code: $dialCode');
-
-    for (var country in CountryHelper.countryList) {
-      if ("+${country.phoneCode}" == countryCode.dialCode) {
-        // Launch event to save the country.
-        homeBloc.add(EventSaveCountryDealCode(country));
-      }
-    }
+  @override
+  void dispose() {
+    super.dispose();
+    ForegroundService().stop();
+    _streamSubscription.cancel();
   }
 }

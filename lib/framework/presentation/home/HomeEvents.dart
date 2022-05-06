@@ -2,6 +2,8 @@ import 'package:emergency_call/domain/model/FavoriteContact.dart';
 import 'package:emergency_call/framework/presentation/utility/Countries.dart';
 import 'package:equatable/equatable.dart';
 
+import '../../../domain/model/Location.dart';
+
 abstract class HomeEvents extends Equatable {
   const HomeEvents();
 
@@ -40,4 +42,10 @@ class EventSaveCountryDealCode extends HomeEvents {
 
 class EventGetCountryDealCode extends HomeEvents {
   const EventGetCountryDealCode();
+}
+
+class EventSaveLocation extends HomeEvents {
+  final UserLocation location;
+
+  const EventSaveLocation(this.location);
 }
