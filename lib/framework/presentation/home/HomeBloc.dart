@@ -1,6 +1,7 @@
 import 'package:emergency_call/domain/interactors/AddFavoriteContact.dart';
 import 'package:emergency_call/domain/interactors/GetFavoriteContacts.dart';
 import 'package:emergency_call/domain/interactors/RemoveFavoriteContact.dart';
+import 'package:emergency_call/domain/interactors/SaveLocation.dart';
 import 'package:emergency_call/domain/model/FavoriteContact.dart';
 import 'package:emergency_call/framework/presentation/home/HomeEvents.dart';
 import 'package:emergency_call/framework/presentation/home/HomeState.dart';
@@ -17,6 +18,7 @@ class HomeBloc extends Bloc<HomeEvents, HomeState> {
     on<EventDeleteFavoriteContact>(_onDeleteFavoriteContact);
     on<EventSaveCountryDealCode>(_onSaveCountryDialCode);
     on<EventGetCountryDealCode>(_onGetCountryDialCode);
+    on<EventSaveLocation>(_onSaveLocation);
   }
 
   final AddFavoriteContact _addFavoriteContact = AddFavoriteContact();
@@ -24,6 +26,7 @@ class HomeBloc extends Bloc<HomeEvents, HomeState> {
   final DeleteFavoriteContact _deleteFavoriteContact = DeleteFavoriteContact();
   final SaveCountry _saveCountryDialCode = SaveCountry();
   final GetCountry _getCountryDialCode = GetCountry();
+  final SaveLocation _saveLocation = SaveLocation();
 
   void _onAddFavoriteContact(
       EventAddFavoriteContact event, Emitter<dynamic> emit) {
@@ -34,10 +37,9 @@ class HomeBloc extends Bloc<HomeEvents, HomeState> {
     favoriteContact.addAll(state.favoriteContacts);
     // Update the state
     HomeState stateUpdated = HomeState(
-      favoriteContactsDataSource: state.favoriteContactsDataSource,
-      favoriteContacts: favoriteContact,
-      country: state.country
-    );
+        favoriteContactsDataSource: state.favoriteContactsDataSource,
+        favoriteContacts: favoriteContact,
+        country: state.country);
     emit(stateUpdated);
   }
 
@@ -84,5 +86,10 @@ class HomeBloc extends Bloc<HomeEvents, HomeState> {
         country: country);
 
     emit(stateUpdated);
+  }
+
+  void _onSaveLocation(EventSaveLocation event, Emitter<dynamic> emit) async {
+    print("Location in bloc!: ${event.location}");
+    await _saveLocation.saveLocation(event.location);
   }
 }
