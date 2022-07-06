@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:developer';
 
 import 'package:emergency_call/domain/model/FavoriteContact.dart';
+import 'package:emergency_call/domain/model/UserPhone.dart';
 import 'package:emergency_call/framework/presentation/home/ContactsPageWidget.dart';
 import 'package:emergency_call/framework/presentation/home/HomeBloc.dart';
 import 'package:emergency_call/framework/presentation/home/HomeEvents.dart';
@@ -16,6 +17,7 @@ import 'package:flutter_foreground_service/flutter_foreground_service.dart';
 import 'package:location/location.dart';
 import 'package:permission_handler/permission_handler.dart' as permissions;
 import 'package:telephony/telephony.dart';
+import 'package:unique_identifier/unique_identifier.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:whatsapp_unilink/whatsapp_unilink.dart';
 
@@ -35,6 +37,7 @@ class _HomeScreenWidget extends State<HomeScreenWidget> {
   final telephony = Telephony.instance;
   final location = Location.instance;
   var showCountryCodeList = false;
+  var imei = "";
   late StreamSubscription<dynamic> _streamSubscription;
 
   onSendStatus(SendStatus status) {
@@ -54,6 +57,8 @@ class _HomeScreenWidget extends State<HomeScreenWidget> {
   @override
   void initState() {
     super.initState();
+    // TODO("Save Imei")
+    //_onSendImei();
     _onGetCountryDial();
     log('initState. Initialization state');
   }
@@ -301,6 +306,18 @@ class _HomeScreenWidget extends State<HomeScreenWidget> {
     ScaffoldMessenger.of(context)
       ..removeCurrentSnackBar()
       ..showSnackBar(SnackBar(content: Text(country.name)));
+  }
+
+  _onSendImei() async {
+    HomeBloc homeBloc = BlocProvider.of<HomeBloc>(context, listen: false);
+    var serialImei = await UniqueIdentifier.serial;
+    // Save UserPhone in server
+    homeBloc.add(EventSaveUserPhone(UserPhone(id: serialImei ?? "", name: "")));
+    setState(() {
+      imei = serialImei ?? "";
+    });
+
+    homeBloc.add(EventSaveImei(imei));
   }
 
   _onGetCountryDial() {

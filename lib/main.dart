@@ -1,14 +1,18 @@
 import 'dart:io';
 
-import 'package:firebase_core/firebase_core.dart';
 import 'package:emergency_call/framework/presentation/home/HomeBloc.dart';
 import 'package:emergency_call/framework/presentation/home/HomeScreenWidget.dart';
-import 'package:firebase_crashlytics/firebase_crashlytics.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-void main() {
+import 'framework/presentation/utility/MyHttpOverrides.dart';
+
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  HttpOverrides.global = MyHttpOverrides();
   runApp(const MyApp());
   initFirebaseCrashlytics();
   startServiceInAndroidPlatform();

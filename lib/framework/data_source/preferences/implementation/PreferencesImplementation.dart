@@ -27,4 +27,19 @@ class PreferenceImplementation implements Preferences {
     prefs.setString(SharedPreferencesHelper.countryIsoCodeKey, country.isoCode);
     prefs.setString(SharedPreferencesHelper.countryCodeKey, country.phoneCode);
   }
+
+  @override
+  Future<void> saveImei(String imei) async {
+    final SharedPreferences prefs = await _prefs;
+    prefs.setString(SharedPreferencesHelper.imei, imei);
+  }
+
+  @override
+  Future<String> getImei() async {
+    final _imei = await _prefs.then((SharedPreferences prefs) {
+      return prefs.getString(SharedPreferencesHelper.imei) ?? "";
+    });
+
+    return _imei;
+  }
 }

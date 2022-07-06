@@ -1,7 +1,10 @@
 import 'package:emergency_call/domain/interactors/AddFavoriteContact.dart';
 import 'package:emergency_call/domain/interactors/GetFavoriteContacts.dart';
+import 'package:emergency_call/domain/interactors/GetImei.dart';
 import 'package:emergency_call/domain/interactors/RemoveFavoriteContact.dart';
+import 'package:emergency_call/domain/interactors/SaveImei.dart';
 import 'package:emergency_call/domain/interactors/SaveLocation.dart';
+import 'package:emergency_call/domain/interactors/SaveUserPhone.dart';
 import 'package:emergency_call/domain/model/FavoriteContact.dart';
 import 'package:emergency_call/framework/presentation/home/HomeEvents.dart';
 import 'package:emergency_call/framework/presentation/home/HomeState.dart';
@@ -19,6 +22,9 @@ class HomeBloc extends Bloc<HomeEvents, HomeState> {
     on<EventSaveCountryDealCode>(_onSaveCountryDialCode);
     on<EventGetCountryDealCode>(_onGetCountryDialCode);
     on<EventSaveLocation>(_onSaveLocation);
+    on<EventSaveUserPhone>(_onSaveUserPhone);
+    on<EventSaveImei>(_onSaveImei);
+    on<EventGetImei>(_onGetImei);
   }
 
   final AddFavoriteContact _addFavoriteContact = AddFavoriteContact();
@@ -27,6 +33,9 @@ class HomeBloc extends Bloc<HomeEvents, HomeState> {
   final SaveCountry _saveCountryDialCode = SaveCountry();
   final GetCountry _getCountryDialCode = GetCountry();
   final SaveLocation _saveLocation = SaveLocation();
+  final SaveUserPhone _saveUserPhone = SaveUserPhone();
+  final SaveImei _saveImei = SaveImei();
+  final GetImei _getImei = GetImei();
 
   void _onAddFavoriteContact(
       EventAddFavoriteContact event, Emitter<dynamic> emit) {
@@ -88,8 +97,27 @@ class HomeBloc extends Bloc<HomeEvents, HomeState> {
     emit(stateUpdated);
   }
 
+  void _onGetImei(EventGetImei event, Emitter<dynamic> emit) async {
+    String imei = await _getImei.getImei();
+
+    HomeState stateUpdated = HomeState(
+        favoriteContactsDataSource: state.favoriteContactsDataSource,
+        favoriteContacts: state.favoriteContacts,
+        country: state.country,
+        imei: imei);
+
+    emit(stateUpdated);
+  }
+
+  void _onSaveUserPhone(EventSaveUserPhone event, Emitter<dynamic> emit) async {
+    await _saveUserPhone.saveUserPhone(event.userPhone);
+  }
+
+  void _onSaveImei(EventSaveImei event, Emitter<dynamic> emit) async {
+    await _saveImei.saveImei(event.imei);
+  }
+
   void _onSaveLocation(EventSaveLocation event, Emitter<dynamic> emit) async {
-    print("Location in bloc!: ${event.location}");
     await _saveLocation.saveLocation(event.location);
   }
 }
