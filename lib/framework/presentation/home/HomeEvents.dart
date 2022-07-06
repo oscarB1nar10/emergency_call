@@ -1,4 +1,5 @@
 import 'package:emergency_call/domain/model/FavoriteContact.dart';
+import 'package:emergency_call/domain/model/UserPhone.dart';
 import 'package:emergency_call/framework/presentation/utility/Countries.dart';
 import 'package:equatable/equatable.dart';
 
@@ -48,4 +49,20 @@ class EventSaveLocation extends HomeEvents {
   final UserLocation location;
 
   const EventSaveLocation(this.location);
+}
+
+class EventSaveUserPhone extends HomeEvents {
+  final UserPhone userPhone;
+
+  const EventSaveUserPhone(this.userPhone);
+}
+
+class EventSaveImei extends HomeEvents {
+  final String imei;
+
+  const EventSaveImei(this.imei);
+}
+
+class EventGetImei extends HomeEvents {
+  const EventGetImei();
 }

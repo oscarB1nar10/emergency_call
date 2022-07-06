@@ -14,7 +14,9 @@
     <application
         android:name=".EmergencyCallApplication"
         android:icon="@mipmap/ic_launcher"
-        android:label="emergency_call">
+        android:label="emergency_call"
+        android:usesCleartextTraffic="true"
+        >
 
         <service
             android:name=".ProximitySensorService"

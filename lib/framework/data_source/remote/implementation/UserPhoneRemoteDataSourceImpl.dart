@@ -2,29 +2,25 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:emergency_call/domain/data/remote/ApiException.dart';
-import 'package:emergency_call/domain/model/Location.dart';
-import 'package:emergency_call/domain/model/UserPhone.dart';
-import 'package:emergency_call/framework/data_source/remote/abstraction/LocationRemoteDataSource.dart';
 import 'package:http/http.dart';
 
-class LocationRemoteDataSourceImpl implements LocationRemoteDataSource {
+import '../../../../domain/model/UserPhone.dart';
+import '../abstraction/UserPhoneRemoteDataSource.dart';
+
+class UserPhoneRemoteDataSourceImpl implements UserPhoneRemoteDataSource {
   final String baseUrl = "192.168.20.21";
 
   // Instance of http client to connection with the server
   Client httpClient = Client();
 
   @override
-  Future saveLocation(UserLocation location) async {
+  Future saveUserPhone(UserPhone userPhone) async {
     var responseJson;
-    const endpoint = "/api/location";
-    var queryParameters = {
-      'userPhoneId': location.userPhoneId,
-      'latitude': location.latitude.toString(),
-      'longitude': location.longitude.toString()
-    };
+    const endpoint = "/api/userPhone";
+    var queryParameters = {'id': userPhone.id, 'name': userPhone.name};
 
     var uri = Uri.https(baseUrl, endpoint, queryParameters);
-    print("Location in remote data source: $uri");
+    print("UserPhone in remote data source: $uri");
 
     try {
       final response = await httpClient.post(uri,
