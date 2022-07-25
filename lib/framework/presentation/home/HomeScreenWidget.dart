@@ -216,12 +216,20 @@ class _HomeScreenWidget extends State<HomeScreenWidget> {
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            InkWell(
-              child: const Image(image: AssetImage('assets/help.png')),
-              onTap: () {
-                // Send SMS
-                triggerEmergencySMS(state.favoriteContactsDataSource);
-              },
+            Stack(
+              children: [
+                const Image(image: AssetImage('assets/help.png')),
+                Positioned.fill(
+                    child: Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    onTap: () {
+                      // Send SMS
+                      triggerEmergencySMS(state.favoriteContactsDataSource);
+                    },
+                  ),
+                ))
+              ],
             )
           ],
         );
