@@ -1,4 +1,4 @@
-package com.example.emergency_call
+package com.b1nar10.emergency_call
 
 import android.content.Intent
 import android.os.Build

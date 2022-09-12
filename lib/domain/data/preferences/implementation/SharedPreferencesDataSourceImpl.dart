@@ -20,4 +20,14 @@ class SharedPreferencesDataSourceImpl implements SharedPreferencesDataSource {
     _preferences.saveCountryDialCode(country);
   }
 
+  @override
+  Future<void> saveImei(String imei) async {
+    _preferences.saveImei(imei);
+  }
+
+  @override
+  Future<dynamic> getImei() async {
+    return _preferences.getImei();
+  }
+
 }

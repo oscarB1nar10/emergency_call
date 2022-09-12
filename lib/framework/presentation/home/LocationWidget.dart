@@ -14,21 +14,23 @@ class LocationWidget extends StatefulWidget {
 }
 
 class _LocationWidget extends State<LocationWidget> {
+  HomeBloc? homeBloc;
+
   @override
   Widget build(BuildContext context) {
     return Padding(
         padding: const EdgeInsets.only(right: 16),
         child: GestureDetector(
           onTap: () {
-            startBackgroundLocation();
+            //TODO ("Get Imei and share location")
+            //_onGetImei();
+            // startBackgroundLocation();
           },
           child: const Icon(Icons.location_searching),
         ));
   }
 
   startBackgroundLocation() async {
-    HomeBloc homeBloc = BlocProvider.of<HomeBloc>(context, listen: false);
-
     var locationPermissionStatus = await Permission.locationAlways.status;
 
     if (locationPermissionStatus.isDenied) {
@@ -39,8 +41,8 @@ class _LocationWidget extends State<LocationWidget> {
       );
     }
 
-    //await BackgroundLocation.setAndroidConfiguration(1000);
-    await BackgroundLocation.startLocationService(distanceFilter: 5);
+    //await BackgroundLocation.setAndroidConfiguration(15000);
+    await BackgroundLocation.startLocationService(distanceFilter: 20);
     BackgroundLocation.startLocationService(forceAndroidLocationManager: true);
 
     BackgroundLocation.getLocationUpdates((location) {
@@ -50,10 +52,16 @@ class _LocationWidget extends State<LocationWidget> {
       ));
 
       // Save contact in localDB
-      homeBloc.add(EventSaveLocation(UserLocation(
+      homeBloc?.add(EventSaveLocation(UserLocation(
+          userPhoneId: homeBloc?.state.imei ?? "",
           latitude: location.latitude ?? 0.0,
           longitude: location.longitude ?? 0.0)));
     });
+  }
+
+  _onGetImei() async {
+    homeBloc = BlocProvider.of<HomeBloc>(context, listen: false);
+    homeBloc?.add(const EventGetImei());
   }
 
   @override

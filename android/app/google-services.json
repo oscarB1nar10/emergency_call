@@ -1,41 +1,41 @@
 {
   "project_info": {
-    "project_number": "1043493148961",
-    "project_id": "emergencycall-7c2b1",
-    "storage_bucket": "emergencycall-7c2b1.appspot.com"
+    "project_number": "984367026082",
+    "project_id": "emergencycall-b897a",
+    "storage_bucket": "emergencycall-b897a.appspot.com"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:1043493148961:android:6c541140edb60e4c2dc660",
+        "mobilesdk_app_id": "1:984367026082:android:1abbfd6c80727af5abecfb",
         "android_client_info": {
-          "package_name": "com.example.emergency_call"
+          "package_name": "com.b1nar10.emergency_call"
         }
       },
       "oauth_client": [
         {
-          "client_id": "1043493148961-fqo0bbnekiql9ctbpj5emg35uchv29ln.apps.googleusercontent.com",
+          "client_id": "984367026082-2q7fulo9tcg6ss4oefq74dnimhe1om7n.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
-            "package_name": "com.example.emergency_call",
+            "package_name": "com.b1nar10.emergency_call",
             "certificate_hash": "83f104e4d44ea29d735c03dd80d23dd592e403a9"
           }
         },
         {
-          "client_id": "1043493148961-b4buld1j2e1nsj3h53q8mv25atma16tv.apps.googleusercontent.com",
+          "client_id": "984367026082-r9tnm4js6d16j1nersljm3ids18e6r2d.apps.googleusercontent.com",
           "client_type": 3
         }
       ],
       "api_key": [
         {
-          "current_key": "AIzaSyBMylzawEjvDmf27Nb_t2Z6mUuTqOL5RwI"
+          "current_key": "AIzaSyDaBM3Chhz84hD02ZySP89O95u0VpettGw"
         }
       ],
       "services": {
         "appinvite_service": {
           "other_platform_oauth_client": [
             {
-              "client_id": "1043493148961-b4buld1j2e1nsj3h53q8mv25atma16tv.apps.googleusercontent.com",
+              "client_id": "984367026082-r9tnm4js6d16j1nersljm3ids18e6r2d.apps.googleusercontent.com",
               "client_type": 3
             }
           ]
