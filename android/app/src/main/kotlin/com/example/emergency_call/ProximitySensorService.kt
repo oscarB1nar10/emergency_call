@@ -1,4 +1,4 @@
-package com.example.emergency_call
+package com.b1nar10.emergency_call
 
 import android.app.NotificationManager
 import android.app.PendingIntent
