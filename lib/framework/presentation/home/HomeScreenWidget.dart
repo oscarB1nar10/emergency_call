@@ -1,12 +1,11 @@
 import 'dart:async';
-import 'dart:developer';
 
 import 'package:emergency_call/domain/model/FavoriteContact.dart';
 import 'package:emergency_call/domain/model/UserPhone.dart';
 import 'package:emergency_call/framework/presentation/home/ContactsPageWidget.dart';
+import 'package:emergency_call/framework/presentation/home/DrawerListWidget.dart';
 import 'package:emergency_call/framework/presentation/home/HomeBloc.dart';
 import 'package:emergency_call/framework/presentation/home/HomeEvents.dart';
-import 'package:emergency_call/framework/presentation/home/LocationWidget.dart';
 import 'package:emergency_call/framework/presentation/model/PersonalContact.dart';
 import 'package:emergency_call/framework/presentation/utility/Countries.dart';
 import 'package:emergency_call/framework/presentation/utility/NetworkConnection.dart';
@@ -22,7 +21,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:whatsapp_unilink/whatsapp_unilink.dart';
 
 import '../utility/Countries.dart';
-import 'CountrySelectorWidget.dart';
+import 'CountryIconWidget.dart';
 import 'HomeState.dart';
 
 class HomeScreenWidget extends StatefulWidget {
@@ -60,7 +59,6 @@ class _HomeScreenWidget extends State<HomeScreenWidget> {
     // TODO("Save Imei")
     //_onSendImei();
     _onGetCountryDial();
-    log('initState. Initialization state');
   }
 
   @override
@@ -68,17 +66,8 @@ class _HomeScreenWidget extends State<HomeScreenWidget> {
     return Scaffold(
       appBar: AppBar(
         title: const Text(Strings.emergencyCall),
-        automaticallyImplyLeading: false,
-        leading: IconButton(
-          icon: const Icon(Icons.emoji_flags),
-          onPressed: () {
-            setState(() {
-              showCountryCodeList = !showCountryCodeList;
-              _navigateCountryPickerPage(context);
-            });
-          },
-        ),
-        actions: const <Widget>[LocationWidget()],
+        automaticallyImplyLeading: true,
+        actions: const <Widget>[CountryIconWidget()],
         centerTitle: true,
       ),
       body: SingleChildScrollView(
@@ -86,6 +75,9 @@ class _HomeScreenWidget extends State<HomeScreenWidget> {
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [showContactInfo(), showEmergencyBell()])),
+      drawer: const Drawer(
+        child: DrawerListWidget(),
+      ),
       floatingActionButton: FloatingActionButton(
         child: const Icon(Icons.add),
         onPressed: () {
@@ -107,19 +99,12 @@ class _HomeScreenWidget extends State<HomeScreenWidget> {
       _navigateContactsPage(context);
     } else if (statusContactsPermission ==
         permissions.PermissionStatus.denied) {
-      print(
-          'Denied. Show a dialog with a reason and again ask for the permission.');
     } else if (statusContactsPermission ==
-        permissions.PermissionStatus.permanentlyDenied) {
-      print('Take the user to the settings page.');
-    }
+        permissions.PermissionStatus.permanentlyDenied) {}
 
     // Location permissions
     if (statusLocationPermission.isGranted) {
-      print("Location permission granted");
-    } else if (statusLocationPermission.isDenied) {
-      print('Location permission granted denied');
-    }
+    } else if (statusLocationPermission.isDenied) {}
   }
 
   // A method that launches the SelectionScreen and awaits the result from
@@ -283,37 +268,23 @@ class _HomeScreenWidget extends State<HomeScreenWidget> {
     for (var favoriteContact in favoriteContacts) {
       // Remove +countryDialCode if exist
       Country country = homeBloc.state.country;
-      print('Dial code refreshed: +${country.phoneCode}');
+      var phoneCode = "";
+      if (country.phoneCode.isEmpty) {
+        phoneCode = Strings.countryDialCode;
+      } else {
+        phoneCode = country.phoneCode;
+      }
       var number =
           CountryHelper.phoneNumberWithoutCountryCode(favoriteContact.phone);
 
       final link = WhatsAppUnilink(
-        phoneNumber: '${country.phoneCode}-$number',
+        phoneNumber: '$phoneCode-$number',
         text: Strings.getEmergencyDefaultMessage(
             favoriteContact.name, emergencyMessage),
       );
 
       await launch('$link');
     }
-  }
-
-  // A method that launches the Country picker screen and awaits the result from
-// Navigator.pop.
-  void _navigateCountryPickerPage(BuildContext context) async {
-    // Navigator.push returns a Future that completes after calling
-    // Navigator.pop on the Selection Screen.
-    final result = await Navigator.push(
-      context,
-      MaterialPageRoute(builder: (context) => const CountrySelectorWidget()),
-    );
-
-    Country country = result as Country;
-
-    // After the Selection of the country returns a result, hide any previous snackbars
-    // and show the new result.
-    ScaffoldMessenger.of(context)
-      ..removeCurrentSnackBar()
-      ..showSnackBar(SnackBar(content: Text(country.name)));
   }
 
   _onSendImei() async {

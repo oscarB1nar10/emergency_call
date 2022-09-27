@@ -16,8 +16,8 @@ class SharedPreferencesDataSourceImpl implements SharedPreferencesDataSource {
   }
 
   @override
-  Future<void> saveCountry(Country country) async {
-    _preferences.saveCountryDialCode(country);
+  Future<dynamic> saveCountry(Country country) async {
+    return _preferences.saveCountryDialCode(country);
   }
 
   @override

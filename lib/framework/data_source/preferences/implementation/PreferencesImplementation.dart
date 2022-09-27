@@ -22,10 +22,12 @@ class PreferenceImplementation implements Preferences {
   }
 
   @override
-  Future<void> saveCountryDialCode(Country country) async {
+  Future<bool> saveCountryDialCode(Country country) async {
     final SharedPreferences prefs = await _prefs;
     prefs.setString(SharedPreferencesHelper.countryIsoCodeKey, country.isoCode);
     prefs.setString(SharedPreferencesHelper.countryCodeKey, country.phoneCode);
+
+    return true;
   }
 
   @override

@@ -35,7 +35,7 @@ class _CountrySelectorState extends State<CountrySelectorWidget> {
 
   Widget onCountryCode(BuildContext context) {
     return BlocBuilder<HomeBloc, HomeState>(builder: (context, state) {
-      print('Country: ${state.country.phoneCode}, ${state.country.isoCode}');
+      List phoneCodeAndIsoCode = _getDefaultPhoneAndIsoCode(state);
       return Row(
         mainAxisSize: MainAxisSize.max,
         mainAxisAlignment: MainAxisAlignment.center,
@@ -44,9 +44,9 @@ class _CountrySelectorState extends State<CountrySelectorWidget> {
             margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             child: CountryCodePicker(
               onChanged: (countryCode) => {_onCountryChange(countryCode)},
-              initialSelection: state.country.isoCode,
+              initialSelection: phoneCodeAndIsoCode[1],
               // Initial selection and favorite can be one of code ('IT') OR dial_code('+39')
-              favorite: ["+${state.country.phoneCode}", state.country.isoCode],
+              favorite: [phoneCodeAndIsoCode[0], phoneCodeAndIsoCode[1]],
               // optional. Shows only country name and flag
               showCountryOnly: false,
               // optional. Shows only country name and flag when popup is closed.
@@ -69,11 +69,7 @@ class _CountrySelectorState extends State<CountrySelectorWidget> {
 
   _onCountryChange(CountryCode countryCode) {
     HomeBloc homeBloc = BlocProvider.of<HomeBloc>(context, listen: false);
-
-    final dialCode = countryCode.dialCode ?? "";
     var countryMatch = const Country();
-
-    print('Dial code: $dialCode');
 
     for (var country in CountryHelper.countryList) {
       if ("+${country.phoneCode}" == countryCode.dialCode) {
@@ -86,6 +82,25 @@ class _CountrySelectorState extends State<CountrySelectorWidget> {
 
     // Go back if a country is selected
     goBackWithSelectedCountry(countryMatch);
+  }
+
+  _getDefaultPhoneAndIsoCode(HomeState homeState) {
+    String phoneCode = "";
+    String isoCode = "";
+
+    if (homeState.country.phoneCode.isNotEmpty) {
+      phoneCode = homeState.country.phoneCode;
+    } else {
+      phoneCode = Strings.countryDialCode;
+    }
+
+    if (homeState.country.isoCode.isNotEmpty) {
+      isoCode = homeState.country.isoCode;
+    } else {
+      isoCode = Strings.isoCode;
+    }
+
+    return [phoneCode, isoCode];
   }
 
   void goBackWithSelectedCountry(Country country) {

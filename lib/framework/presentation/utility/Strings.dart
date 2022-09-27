@@ -8,6 +8,8 @@ class Strings {
   static const countryPicker = "Country picker";
   static const mapLocationUrl = "https://www.google.com/maps/search/?api=1&query=";
   static const countryDialCode = "+57";
+  static const isoCode = "CO";
+  static const privacyPolicyUrl = "https://oscarivanramtin.wixsite.com/emergencycall/about-1";
 
   static String messageToSend(String contactName, String contactNumber) {
     String message =
