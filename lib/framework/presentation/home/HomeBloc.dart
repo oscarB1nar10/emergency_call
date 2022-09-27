@@ -75,14 +75,19 @@ class HomeBloc extends Bloc<HomeEvents, HomeState> {
 
   void _onSaveCountryDialCode(
       EventSaveCountryDealCode event, Emitter<dynamic> emit) async {
-    await _saveCountryDialCode.saveCountryDialCode(event.country);
+    bool isCountrySaved =
+        await _saveCountryDialCode.saveCountryDialCode(event.country);
 
-    HomeState stateUpdated = HomeState(
-        favoriteContactsDataSource: state.favoriteContactsDataSource,
-        favoriteContacts: state.favoriteContacts,
-        country: event.country);
+    if (isCountrySaved) {
+      HomeState stateUpdated = HomeState(
+          favoriteContactsDataSource: state.favoriteContactsDataSource,
+          favoriteContacts: state.favoriteContacts,
+          country: event.country);
 
-    emit(stateUpdated);
+      emit(stateUpdated);
+    } else {
+      emit(state);
+    }
   }
 
   void _onGetCountryDialCode(

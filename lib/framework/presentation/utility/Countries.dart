@@ -1,3 +1,5 @@
+import 'Strings.dart';
+
 class Country {
   final String isoCode;
   final String phoneCode;
@@ -5,8 +7,8 @@ class Country {
   final String iso3Code;
 
   const Country(
-      {this.isoCode = '',
-      this.phoneCode = '',
+      {this.isoCode = Strings.isoCode,
+      this.phoneCode = Strings.countryDialCode,
       this.name = '',
       this.iso3Code = ''});
 }
