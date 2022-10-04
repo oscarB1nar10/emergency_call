@@ -12,13 +12,15 @@ class MainActivity : FlutterActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        MethodChannel(
-            flutterEngine?.dartExecutor?.binaryMessenger,
-            "com.emergency_call.messages"
-        ).setMethodCallHandler { call, result ->
-            if (call.method.equals("startProximityService")) {
-                startProximityService()
-                result.success("Service started")
+        flutterEngine?.dartExecutor?.binaryMessenger?.let {
+            MethodChannel(
+                it,
+                "com.emergency_call.messages"
+            ).setMethodCallHandler { call, result ->
+                if (call.method.equals("startProximityService")) {
+                    startProximityService()
+                    result.success("Service started")
+                }
             }
         }
     }

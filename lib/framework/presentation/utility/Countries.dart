@@ -1547,6 +1547,51 @@ class CountryHelper {
     ),
   ];
 
+  static const List<Country> supportedCountries = [
+    Country(
+      isoCode: "AR",
+      phoneCode: "54",
+      name: "Argentina",
+      iso3Code: "ARG",
+    ),
+    Country(
+      isoCode: "CL",
+      phoneCode: "56",
+      name: "Chile",
+      iso3Code: "CHL",
+    ),
+    Country(
+      isoCode: "CO",
+      phoneCode: "57",
+      name: "Colombia",
+      iso3Code: "COL",
+    ),
+    Country(
+      isoCode: "EC",
+      phoneCode: "593",
+      name: "Ecuador",
+      iso3Code: "ECU",
+    ),
+    Country(
+      isoCode: "MX",
+      phoneCode: "52",
+      name: "Mexico",
+      iso3Code: "MEX",
+    ),
+    Country(
+      isoCode: "VE",
+      phoneCode: "58",
+      name: "Venezuela, Bolivarian Republic of",
+      iso3Code: "VEN",
+    ),
+    Country(
+      isoCode: "US",
+      phoneCode: "1",
+      name: "United States",
+      iso3Code: "USA",
+    )
+  ];
+
   static String phoneNumberWithoutCountryCode(
       String phoneNumberWithCountryCode) {
     RegExp _regex = RegExp(
@@ -1557,5 +1602,14 @@ class CountryHelper {
     });
     int _lastQuoteIndex = numberWithoutCountryCode.lastIndexOf("\"");
     return numberWithoutCountryCode.replaceRange(0, (_lastQuoteIndex + 1), "");
+  }
+
+  static List<String> getSupportedCountries() {
+    List<String> isoCodeSupportedCountries = [];
+    for (var country in supportedCountries) {
+      isoCodeSupportedCountries.add(country.isoCode);
+    }
+
+    return isoCodeSupportedCountries;
   }
 }
