@@ -80,7 +80,7 @@ class ProximitySensorService : Service() {
                 .setContentText("Listening for proximity")
                 .setContentTitle("Proximity listener running...")
                 .setSmallIcon(R.mipmap.ic_launcher)
-                .setContentIntent(PendingIntent.getActivity(this, 0, intent, 0))
+                .setContentIntent(PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_IMMUTABLE))
 
             val notificationManager: NotificationManager =
                 getSystemService(NOTIFICATION_SERVICE) as NotificationManager

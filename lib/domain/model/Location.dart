@@ -9,4 +9,11 @@ class UserLocation {
       this.userPhoneId = "",
       this.latitude = 0.0,
       this.longitude = 0.0});
+
+  Map<String, String> toJson() => {
+        "id": "$id",
+        "userPhoneId": userPhoneId,
+        "latitude": "$latitude",
+        "longitude": "$longitude",
+      };
 }

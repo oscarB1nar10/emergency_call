@@ -3,32 +3,30 @@ import 'dart:io';
 
 import 'package:emergency_call/domain/data/remote/ApiException.dart';
 import 'package:emergency_call/domain/model/Location.dart';
-import 'package:emergency_call/domain/model/UserPhone.dart';
 import 'package:emergency_call/framework/data_source/remote/abstraction/LocationRemoteDataSource.dart';
 import 'package:http/http.dart';
 
-class LocationRemoteDataSourceImpl implements LocationRemoteDataSource {
-  final String baseUrl = "192.168.20.21";
+import '../../../presentation/utility/Strings.dart';
 
+class LocationRemoteDataSourceImpl implements LocationRemoteDataSource {
   // Instance of http client to connection with the server
   Client httpClient = Client();
 
   @override
   Future saveLocation(UserLocation location) async {
     var responseJson;
-    const endpoint = "/api/location";
-    var queryParameters = {
-      'userPhoneId': location.userPhoneId,
-      'latitude': location.latitude.toString(),
-      'longitude': location.longitude.toString()
-    };
+    const endpoint = "/prod/ec_save_location";
 
-    var uri = Uri.https(baseUrl, endpoint, queryParameters);
+    var uri = Uri.https(Strings.baseApiUrl, endpoint);
     print("Location in remote data source: $uri");
 
     try {
       final response = await httpClient.post(uri,
-          headers: {HttpHeaders.contentTypeHeader: 'application/json'});
+          headers: {
+            HttpHeaders.contentTypeHeader: 'application/json',
+            "x-api-key": Strings.apiKey
+          },
+          body: jsonEncode(location));
 
       responseJson = _returnResponse(response);
     } on SocketOption {

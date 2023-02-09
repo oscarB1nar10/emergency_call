@@ -1,6 +1,8 @@
 import 'package:location/location.dart';
 
 class Strings {
+  static const String baseApiUrl = "qko8vh3p5m.execute-api.us-east-1.amazonaws.com";
+  static const String apiKey = "OkPEwtJxUjaVOG6YAqPjK1kEOXvp76pG4JL2kh5k";
   static const String emergencyCall = "Emergency call";
   static const messageSent = "Message sent";
   static const messageNotSent = "Message not sent";
