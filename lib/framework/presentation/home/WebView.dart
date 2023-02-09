@@ -13,11 +13,14 @@ class WebViewApp extends StatefulWidget {
 }
 
 class _WebViewAppState extends State<WebViewApp> {
+  late WebViewController _controller;
+
   // Add from here ...
   @override
   void initState() {
     if (Platform.isAndroid) {
-      WebView.platform = SurfaceAndroidWebView();
+      _controller = WebViewController()
+        ..loadRequest(Uri.parse(Strings.privacyPolicyUrl));
     }
     super.initState();
   }
@@ -28,8 +31,8 @@ class _WebViewAppState extends State<WebViewApp> {
       appBar: AppBar(
         title: const Text('Terms and condictions'),
       ),
-      body: const WebView(
-        initialUrl: Strings.privacyPolicyUrl,
+      body: WebViewWidget(
+        controller: _controller,
       ),
     );
   }

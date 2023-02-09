@@ -22,6 +22,7 @@ import 'package:whatsapp_unilink/whatsapp_unilink.dart';
 
 import 'CountryIconWidget.dart';
 import 'HomeState.dart';
+import 'LocationWidget.dart';
 
 class HomeScreenWidget extends StatefulWidget {
   const HomeScreenWidget({Key? key}) : super(key: key);
@@ -55,8 +56,7 @@ class _HomeScreenWidget extends State<HomeScreenWidget> {
   @override
   void initState() {
     super.initState();
-    // TODO("Save Imei")
-    //_onSendImei();
+    _onSendImei();
     _onGetCountryDial();
   }
 
@@ -66,7 +66,7 @@ class _HomeScreenWidget extends State<HomeScreenWidget> {
       appBar: AppBar(
         title: const Text(Strings.emergencyCall),
         automaticallyImplyLeading: true,
-        actions: const <Widget>[CountryIconWidget()],
+        actions: const <Widget>[CountryIconWidget(), LocationWidget()],
         centerTitle: true,
       ),
       body: SingleChildScrollView(
@@ -80,30 +80,26 @@ class _HomeScreenWidget extends State<HomeScreenWidget> {
       floatingActionButton: FloatingActionButton(
         child: const Icon(Icons.add),
         onPressed: () {
-          requestContactsPermissions(context);
+          requestContactPermissions(context);
         },
         backgroundColor: Colors.red,
       ),
     );
   }
 
-  Future<void> requestContactsPermissions(BuildContext context) async {
+  Future<void> requestContactPermissions(BuildContext context) async {
     var statusContactsPermission =
         await permissions.Permission.contacts.request();
-    var statusLocationPermission =
-        await permissions.Permission.location.request();
 
-    // Contacts permissions
     if (statusContactsPermission.isGranted) {
       _navigateContactsPage(context);
     } else if (statusContactsPermission ==
         permissions.PermissionStatus.denied) {
+      // TODO("Handle negation of permissions through an explanation")
     } else if (statusContactsPermission ==
-        permissions.PermissionStatus.permanentlyDenied) {}
-
-    // Location permissions
-    if (statusLocationPermission.isGranted) {
-    } else if (statusLocationPermission.isDenied) {}
+        permissions.PermissionStatus.permanentlyDenied) {
+      // TODO("Handle negation of permissions through an explanation")
+    }
   }
 
   // A method that launches the SelectionScreen and awaits the result from

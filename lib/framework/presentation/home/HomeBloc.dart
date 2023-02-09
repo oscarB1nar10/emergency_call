@@ -48,7 +48,8 @@ class HomeBloc extends Bloc<HomeEvents, HomeState> {
     HomeState stateUpdated = HomeState(
         favoriteContactsDataSource: state.favoriteContactsDataSource,
         favoriteContacts: favoriteContact,
-        country: state.country);
+        country: state.country,
+        imei: state.imei);
     emit(stateUpdated);
   }
 
@@ -60,7 +61,8 @@ class HomeBloc extends Bloc<HomeEvents, HomeState> {
     HomeState stateUpdated = HomeState(
         favoriteContactsDataSource: favoriteContacts,
         favoriteContacts: state.favoriteContacts,
-        country: state.country);
+        country: state.country,
+        imei: state.imei);
 
     emit(stateUpdated);
   }
@@ -82,7 +84,8 @@ class HomeBloc extends Bloc<HomeEvents, HomeState> {
       HomeState stateUpdated = HomeState(
           favoriteContactsDataSource: state.favoriteContactsDataSource,
           favoriteContacts: state.favoriteContacts,
-          country: event.country);
+          country: event.country,
+          imei: state.imei);
 
       emit(stateUpdated);
     } else {
@@ -97,7 +100,8 @@ class HomeBloc extends Bloc<HomeEvents, HomeState> {
     HomeState stateUpdated = HomeState(
         favoriteContactsDataSource: state.favoriteContactsDataSource,
         favoriteContacts: state.favoriteContacts,
-        country: country);
+        country: country,
+        imei: state.imei);
 
     emit(stateUpdated);
   }

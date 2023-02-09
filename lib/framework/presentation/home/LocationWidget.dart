@@ -1,10 +1,11 @@
-import 'package:background_location/background_location.dart';
 import 'package:emergency_call/domain/model/Location.dart';
 import 'package:emergency_call/framework/presentation/home/HomeBloc.dart';
 import 'package:emergency_call/framework/presentation/home/HomeEvents.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:permission_handler/permission_handler.dart' as permissions;
 
 class LocationWidget extends StatefulWidget {
   const LocationWidget({Key? key}) : super(key: key);
@@ -14,6 +15,7 @@ class LocationWidget extends StatefulWidget {
 }
 
 class _LocationWidget extends State<LocationWidget> {
+  Geolocator geolocator = Geolocator();
   HomeBloc? homeBloc;
 
   @override
@@ -23,40 +25,61 @@ class _LocationWidget extends State<LocationWidget> {
         child: GestureDetector(
           onTap: () {
             //TODO ("Get Imei and share location")
-            //_onGetImei();
-            // startBackgroundLocation();
+            _onGetImei();
+            requestLocationPermission(context);
           },
           child: const Icon(Icons.location_searching),
         ));
   }
 
-  startBackgroundLocation() async {
-    var locationPermissionStatus = await Permission.locationAlways.status;
+  Future<void> requestLocationPermission(BuildContext context) async {
+    var statusLocationPermission =
+        await permissions.Permission.location.request();
 
-    if (locationPermissionStatus.isDenied) {
-      await BackgroundLocation.setAndroidNotification(
-        title: 'Background service is running',
-        message: 'Background location in progress',
-        icon: '@mipmap/ic_launcher',
-      );
+    if (statusLocationPermission.isGranted) {
+      startBackgroundLocation();
+    } else if (statusLocationPermission.isDenied) {
+      // TODO("Handle negation of permissions through an explanation")
     }
+  }
 
-    //await BackgroundLocation.setAndroidConfiguration(15000);
-    await BackgroundLocation.startLocationService(distanceFilter: 20);
-    BackgroundLocation.startLocationService(forceAndroidLocationManager: true);
+  startBackgroundLocation() async {
+    var locationWhenInUsePermissionStatus =
+        await Permission.locationWhenInUse.status;
+    var locationAlwaysStatus = await Permission.locationAlways.status;
 
-    BackgroundLocation.getLocationUpdates((location) {
-      print("current Location: $location");
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-        content: Text("current Location"),
-      ));
+    if (locationWhenInUsePermissionStatus.isGranted ||
+        locationAlwaysStatus.isGranted) {
+      LocationSettings locationSettings = AndroidSettings(
+          accuracy: LocationAccuracy.medium,
+          distanceFilter: 2,
+          forceLocationManager: true,
+          intervalDuration: const Duration(seconds: 10),
+          //(Optional) Set foreground notification config to keep the app alive
+          //when going to the background
+          foregroundNotificationConfig: const ForegroundNotificationConfig(
+            notificationText:
+                "emergency call app will continue to receive your location even when you aren't using it",
+            notificationTitle: "Running in Background",
+            enableWakeLock: true,
+          ));
 
-      // Save contact in localDB
-      homeBloc?.add(EventSaveLocation(UserLocation(
-          userPhoneId: homeBloc?.state.imei ?? "",
-          latitude: location.latitude ?? 0.0,
-          longitude: location.longitude ?? 0.0)));
-    });
+      Geolocator.getPositionStream(locationSettings: locationSettings)
+          .listen((Position? position) {
+        if (position != null) {
+          homeBloc?.add(EventSaveLocation(UserLocation(
+              userPhoneId: homeBloc?.state.imei ?? "",
+              latitude: position.latitude,
+              longitude: position.longitude)));
+
+          ScaffoldMessenger.of(context)
+            ..removeCurrentSnackBar()
+            ..showSnackBar(SnackBar(
+                content: Text(
+                    "Location: ${position.latitude}, ${position.longitude}")));
+        }
+      });
+    } else {}
   }
 
   _onGetImei() async {
@@ -66,7 +89,6 @@ class _LocationWidget extends State<LocationWidget> {
 
   @override
   void dispose() {
-    BackgroundLocation.stopLocationService();
     super.dispose();
   }
 }

@@ -5,6 +5,7 @@ import 'package:emergency_call/framework/presentation/utility/Strings.dart';
 import 'package:flutter/material.dart';
 
 import '../model/PersonalContact.dart';
+import 'CustomSearchDelegate.dart';
 
 class ContactsPage extends StatefulWidget {
   const ContactsPage({Key? key}) : super(key: key);
@@ -27,6 +28,19 @@ class _ContactsPageState extends State<ContactsPage> {
     return Scaffold(
         appBar: AppBar(
           title: (const Text(Strings.contacts)),
+          actions: [
+            IconButton(
+              onPressed: () async {
+                // method to show the search bar
+                var result = await showSearch(
+                    context: context,
+                    // delegate to customize the search bar
+                    delegate: CustomSearchDelegate(_contacts.toList()));
+                goBackWithContactSelected(result);
+              },
+              icon: const Icon(Icons.search),
+            )
+          ],
         ),
         //Build a list view of all contacts, displaying their avatar and
         // display name
