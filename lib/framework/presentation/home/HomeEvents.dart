@@ -66,3 +66,7 @@ class EventSaveImei extends HomeEvents {
 class EventGetImei extends HomeEvents {
   const EventGetImei();
 }
+
+class EventGetUserCredentials extends HomeEvents {
+  const EventGetUserCredentials();
+}

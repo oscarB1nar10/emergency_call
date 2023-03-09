@@ -1,6 +1,7 @@
 import 'package:emergency_call/domain/interactors/AddFavoriteContact.dart';
 import 'package:emergency_call/domain/interactors/GetFavoriteContacts.dart';
 import 'package:emergency_call/domain/interactors/GetImei.dart';
+import 'package:emergency_call/domain/interactors/GetUserCredentials.dart';
 import 'package:emergency_call/domain/interactors/RemoveFavoriteContact.dart';
 import 'package:emergency_call/domain/interactors/SaveImei.dart';
 import 'package:emergency_call/domain/interactors/SaveLocation.dart';
@@ -9,6 +10,7 @@ import 'package:emergency_call/domain/model/FavoriteContact.dart';
 import 'package:emergency_call/framework/presentation/home/HomeEvents.dart';
 import 'package:emergency_call/framework/presentation/home/HomeState.dart';
 import 'package:emergency_call/framework/presentation/utility/Countries.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../domain/interactors/GetCountry.dart';
@@ -25,6 +27,7 @@ class HomeBloc extends Bloc<HomeEvents, HomeState> {
     on<EventSaveUserPhone>(_onSaveUserPhone);
     on<EventSaveImei>(_onSaveImei);
     on<EventGetImei>(_onGetImei);
+    on<EventGetUserCredentials>(_onGetUserCredentials);
   }
 
   final AddFavoriteContact _addFavoriteContact = AddFavoriteContact();
@@ -36,6 +39,7 @@ class HomeBloc extends Bloc<HomeEvents, HomeState> {
   final SaveUserPhone _saveUserPhone = SaveUserPhone();
   final SaveImei _saveImei = SaveImei();
   final GetImei _getImei = GetImei();
+  final GetUserCredentials _getUserCredentials = GetUserCredentials();
 
   void _onAddFavoriteContact(
       EventAddFavoriteContact event, Emitter<dynamic> emit) {
@@ -49,7 +53,9 @@ class HomeBloc extends Bloc<HomeEvents, HomeState> {
         favoriteContactsDataSource: state.favoriteContactsDataSource,
         favoriteContacts: favoriteContact,
         country: state.country,
-        imei: state.imei);
+        imei: state.imei,
+        userCredentials: state.userCredentials);
+
     emit(stateUpdated);
   }
 
@@ -62,7 +68,8 @@ class HomeBloc extends Bloc<HomeEvents, HomeState> {
         favoriteContactsDataSource: favoriteContacts,
         favoriteContacts: state.favoriteContacts,
         country: state.country,
-        imei: state.imei);
+        imei: state.imei,
+        userCredentials: state.userCredentials);
 
     emit(stateUpdated);
   }
@@ -85,7 +92,8 @@ class HomeBloc extends Bloc<HomeEvents, HomeState> {
           favoriteContactsDataSource: state.favoriteContactsDataSource,
           favoriteContacts: state.favoriteContacts,
           country: event.country,
-          imei: state.imei);
+          imei: state.imei,
+          userCredentials: state.userCredentials);
 
       emit(stateUpdated);
     } else {
@@ -101,7 +109,8 @@ class HomeBloc extends Bloc<HomeEvents, HomeState> {
         favoriteContactsDataSource: state.favoriteContactsDataSource,
         favoriteContacts: state.favoriteContacts,
         country: country,
-        imei: state.imei);
+        imei: state.imei,
+        userCredentials: state.userCredentials);
 
     emit(stateUpdated);
   }
@@ -113,7 +122,23 @@ class HomeBloc extends Bloc<HomeEvents, HomeState> {
         favoriteContactsDataSource: state.favoriteContactsDataSource,
         favoriteContacts: state.favoriteContacts,
         country: state.country,
-        imei: imei);
+        imei: imei,
+        userCredentials: state.userCredentials);
+
+    emit(stateUpdated);
+  }
+
+  void _onGetUserCredentials(
+      EventGetUserCredentials event, Emitter<dynamic> emit) async {
+    UserCredential userCredential =
+        await _getUserCredentials.getUserCredentials();
+
+    HomeState stateUpdated = HomeState(
+        favoriteContactsDataSource: state.favoriteContactsDataSource,
+        favoriteContacts: state.favoriteContacts,
+        country: state.country,
+        imei: state.imei,
+        userCredentials: userCredential);
 
     emit(stateUpdated);
   }
