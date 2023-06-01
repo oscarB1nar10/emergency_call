@@ -16,7 +16,8 @@ class LocationWidget extends StatefulWidget {
 
 class _LocationWidget extends State<LocationWidget> {
   Geolocator geolocator = Geolocator();
-  HomeBloc? homeBloc;
+  late HomeBloc homeBloc;
+  var isLocationEnable = false;
 
   @override
   Widget build(BuildContext context) {
@@ -24,11 +25,12 @@ class _LocationWidget extends State<LocationWidget> {
         padding: const EdgeInsets.only(right: 16),
         child: GestureDetector(
           onTap: () {
-            //TODO ("Get Imei and share location")
-            _onGetImei();
-            requestLocationPermission(context);
+            _onGetUserCredentials();
           },
-          child: const Icon(Icons.location_searching),
+          child: Icon(
+            Icons.location_searching,
+            color: isLocationEnable ? Colors.green : Colors.white70,
+          ),
         ));
   }
 
@@ -38,6 +40,7 @@ class _LocationWidget extends State<LocationWidget> {
 
     if (statusLocationPermission.isGranted) {
       startBackgroundLocation();
+      isLocationEnable = !isLocationEnable;
     } else if (statusLocationPermission.isDenied) {
       // TODO("Handle negation of permissions through an explanation")
     }
@@ -67,8 +70,8 @@ class _LocationWidget extends State<LocationWidget> {
       Geolocator.getPositionStream(locationSettings: locationSettings)
           .listen((Position? position) {
         if (position != null) {
-          homeBloc?.add(EventSaveLocation(UserLocation(
-              userPhoneId: homeBloc?.state.imei ?? "",
+          homeBloc.add(EventSaveLocation(UserLocation(
+              userPhoneId: homeBloc.state.userCredentials?.user?.uid ?? "",
               latitude: position.latitude,
               longitude: position.longitude)));
 
@@ -82,9 +85,15 @@ class _LocationWidget extends State<LocationWidget> {
     } else {}
   }
 
-  _onGetImei() async {
+  _onGetUserCredentials() async {
     homeBloc = BlocProvider.of<HomeBloc>(context, listen: false);
-    homeBloc?.add(const EventGetImei());
+    // Get user credentials from Google account
+    homeBloc.add(const EventGetUserCredentials());
+    homeBloc.stream.listen((state) {
+      if (state.userCredentials != null) {
+        requestLocationPermission(context);
+      }
+    });
   }
 
   @override

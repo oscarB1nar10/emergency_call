@@ -55,7 +55,11 @@ class MyApp extends StatelessWidget {
           // is not restarted.
           primarySwatch: Colors.red,
         ),
-        home: const HomeScreenWidget(),
+        initialRoute: '/home',
+        routes: {
+          '/home': (context) => const HomeScreenWidget()
+          // Add more routes as needed
+        },
       ),
     );
   }

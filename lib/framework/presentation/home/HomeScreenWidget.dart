@@ -18,7 +18,6 @@ import 'package:permission_handler/permission_handler.dart' as permissions;
 import 'package:telephony/telephony.dart';
 import 'package:unique_identifier/unique_identifier.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:whatsapp_unilink/whatsapp_unilink.dart';
 
 import 'CountryIconWidget.dart';
 import 'HomeState.dart';
@@ -32,6 +31,7 @@ class HomeScreenWidget extends StatefulWidget {
 }
 
 class _HomeScreenWidget extends State<HomeScreenWidget> {
+  late HomeBloc homeBloc;
   var personalContact = const PersonalContact();
   final telephony = Telephony.instance;
   final location = Location.instance;
@@ -56,7 +56,9 @@ class _HomeScreenWidget extends State<HomeScreenWidget> {
   @override
   void initState() {
     super.initState();
+    homeBloc = BlocProvider.of<HomeBloc>(context, listen: false);
     _onSendImei();
+    _onGetUserCredentials();
     _onGetCountryDial();
   }
 
@@ -90,6 +92,8 @@ class _HomeScreenWidget extends State<HomeScreenWidget> {
   Future<void> requestContactPermissions(BuildContext context) async {
     var statusContactsPermission =
         await permissions.Permission.contacts.request();
+    var statusLocationPermission =
+        await permissions.Permission.location.request();
 
     if (statusContactsPermission.isGranted) {
       _navigateContactsPage(context);
@@ -100,6 +104,11 @@ class _HomeScreenWidget extends State<HomeScreenWidget> {
         permissions.PermissionStatus.permanentlyDenied) {
       // TODO("Handle negation of permissions through an explanation")
     }
+
+    // Location permissions
+    if (statusLocationPermission.isGranted) {
+      // TODO("Handle negation of permissions through an explanation")
+    } else if (statusLocationPermission.isDenied) {}
   }
 
   // A method that launches the SelectionScreen and awaits the result from
@@ -123,8 +132,6 @@ class _HomeScreenWidget extends State<HomeScreenWidget> {
     setState(() {
       this.personalContact = personalContact;
 
-      HomeBloc homeBloc = BlocProvider.of<HomeBloc>(context, listen: false);
-
       // Save contact in localDB
       homeBloc.add(EventAddFavoriteContact(
           personalContact.fromPersonalToFavoriteContact()));
@@ -133,7 +140,6 @@ class _HomeScreenWidget extends State<HomeScreenWidget> {
 
   Widget showContactInfo() {
     // Launch event to retrieve saved favorite contacts.
-    HomeBloc homeBloc = BlocProvider.of<HomeBloc>(context, listen: false);
     homeBloc.add(const EventGetFavoriteContact());
 
     return BlocBuilder<HomeBloc, HomeState>(builder: (context, state) {
@@ -258,8 +264,6 @@ class _HomeScreenWidget extends State<HomeScreenWidget> {
 
   openWhatsApp(
       List<FavoriteContact> favoriteContacts, String emergencyMessage) async {
-    HomeBloc homeBloc = BlocProvider.of<HomeBloc>(context, listen: false);
-
     for (var favoriteContact in favoriteContacts) {
       // Remove +countryDialCode if exist
       Country country = homeBloc.state.country;
@@ -272,30 +276,38 @@ class _HomeScreenWidget extends State<HomeScreenWidget> {
       var number =
           CountryHelper.phoneNumberWithoutCountryCode(favoriteContact.phone);
 
-      final link = WhatsAppUnilink(
-        phoneNumber: '$phoneCode-$number',
-        text: Strings.getEmergencyDefaultMessage(
-            favoriteContact.name, emergencyMessage),
-      );
+      String whatsappURLAndroid =
+          "whatsapp://send?phone=$phoneCode-$number&text=${Uri.encodeFull(Strings.getEmergencyDefaultMessage(favoriteContact.name, emergencyMessage))}";
 
-      await launch('$link');
+      if (await canLaunchUrl(Uri.parse(whatsappURLAndroid))) {
+        await launchUrl(Uri.parse(whatsappURLAndroid));
+      }
     }
   }
 
   _onSendImei() async {
-    HomeBloc homeBloc = BlocProvider.of<HomeBloc>(context, listen: false);
     var serialImei = await UniqueIdentifier.serial;
-    // Save UserPhone in server
-    homeBloc.add(EventSaveUserPhone(UserPhone(id: serialImei ?? "", name: "")));
     setState(() {
       imei = serialImei ?? "";
     });
-
     homeBloc.add(EventSaveImei(imei));
   }
 
+  _onGetUserCredentials() async {
+    // Get user credentials from Google account
+    homeBloc.add(const EventGetUserCredentials());
+    homeBloc.stream.listen((state) {
+      if (state.userCredentials != null) {
+        // Save UserPhone in server
+        homeBloc.add(EventSaveUserPhone(UserPhone(
+            id: state.userCredentials?.user?.uid ?? "",
+            imei: imei ?? "",
+            name: "")));
+      }
+    });
+  }
+
   _onGetCountryDial() {
-    HomeBloc homeBloc = BlocProvider.of<HomeBloc>(context, listen: false);
     // Launch event to get the country dial code.
     homeBloc.add(const EventGetCountryDealCode());
   }
