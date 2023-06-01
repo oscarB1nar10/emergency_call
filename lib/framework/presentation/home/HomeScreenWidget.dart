@@ -18,7 +18,6 @@ import 'package:permission_handler/permission_handler.dart' as permissions;
 import 'package:telephony/telephony.dart';
 import 'package:unique_identifier/unique_identifier.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:whatsapp_unilink/whatsapp_unilink.dart';
 
 import 'CountryIconWidget.dart';
 import 'HomeState.dart';
@@ -277,13 +276,12 @@ class _HomeScreenWidget extends State<HomeScreenWidget> {
       var number =
           CountryHelper.phoneNumberWithoutCountryCode(favoriteContact.phone);
 
-      final link = WhatsAppUnilink(
-        phoneNumber: '$phoneCode-$number',
-        text: Strings.getEmergencyDefaultMessage(
-            favoriteContact.name, emergencyMessage),
-      );
+      String whatsappURLAndroid =
+          "whatsapp://send?phone=$phoneCode-$number&text=${Uri.encodeFull(Strings.getEmergencyDefaultMessage(favoriteContact.name, emergencyMessage))}";
 
-      await launch('$link');
+      if (await canLaunchUrl(Uri.parse(whatsappURLAndroid))) {
+        await launchUrl(Uri.parse(whatsappURLAndroid));
+      }
     }
   }
 
