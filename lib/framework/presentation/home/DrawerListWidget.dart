@@ -22,6 +22,12 @@ class DrawerListWidget extends StatelessWidget {
                     _navigateToWebView(context);
                   },
                 ),
+                ListTile(
+                  title: const Text('Subscription'),
+                  onTap: () {
+                    _navigateToSubscription(context);
+                  },
+                ),
               ],
             ),
           ),
@@ -41,24 +47,28 @@ class DrawerListWidget extends StatelessWidget {
       ),
     );
   }
-}
 
-void _navigateToWebView(BuildContext context) async {
-  // Navigator.push returns a Future that completes after calling
-  // Navigator.pop on the Selection Screen.
-  final result = await Navigator.push(
-    context,
-    MaterialPageRoute(builder: (context) => const WebViewApp()),
-  );
-}
+  void _navigateToWebView(BuildContext context) async {
+    // Navigator.push returns a Future that completes after calling
+    // Navigator.pop on the Selection Screen.
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const WebViewApp()),
+    );
+  }
 
-void _signOut(BuildContext context) async {
-  final GoogleSignIn googleSignIn = GoogleSignIn();
-  // Sign out from Google
-  await googleSignIn.signOut();
-  // Sign out from Firebase
-  await FirebaseAuth.instance.signOut();
+  void _navigateToSubscription(BuildContext context) async {
+    Navigator.pushNamed(context, '/subscriptions');
+  }
 
-  // Name of the route for HomeScreenWidget
-  Navigator.pushReplacementNamed(context, '/home');
+  void _signOut(BuildContext context) async {
+    final GoogleSignIn googleSignIn = GoogleSignIn();
+    // Sign out from Google
+    await googleSignIn.signOut();
+    // Sign out from Firebase
+    await FirebaseAuth.instance.signOut();
+
+    // Name of the route for HomeScreenWidget
+    Navigator.pushReplacementNamed(context, '/home');
+  }
 }

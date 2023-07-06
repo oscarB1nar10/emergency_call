@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:emergency_call/framework/presentation/home/HomeBloc.dart';
 import 'package:emergency_call/framework/presentation/home/HomeScreenWidget.dart';
+import 'package:emergency_call/framework/presentation/home/PurchaseWidget.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -57,7 +58,8 @@ class MyApp extends StatelessWidget {
         ),
         initialRoute: '/home',
         routes: {
-          '/home': (context) => const HomeScreenWidget()
+          '/home': (context) => const HomeScreenWidget(),
+          '/subscriptions': (context) => const SubscriptionWidget()
           // Add more routes as needed
         },
       ),
