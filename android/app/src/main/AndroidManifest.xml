@@ -1,5 +1,5 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.b1nar10.emergency_call">
+    package="com.b1nar10.emergency_call2">
     <!-- add these -->
     <!-- Location permissions -->
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
@@ -13,9 +13,9 @@
     <uses-permission android:name="android.hardware.sensor.proximity" />
 
     <application
-        android:name="com.b1nar10.emergency_call.EmergencyCallApplication"
+        android:name=".EmergencyCallApplication"
         android:icon="@mipmap/ic_launcher"
-        android:label="emergency_call"
+        android:label="emergency_call2"
         android:usesCleartextTraffic="true"
         >
 

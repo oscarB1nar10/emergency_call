@@ -41,6 +41,43 @@
           ]
         }
       }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:984367026082:android:64c0673df511c7c4abecfb",
+        "android_client_info": {
+          "package_name": "com.b1nar10.emergency_call2"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "984367026082-82qrdki6lse5o1rn11jp69gf9n3rtobh.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.b1nar10.emergency_call2",
+            "certificate_hash": "83f104e4d44ea29d735c03dd80d23dd592e403a9"
+          }
+        },
+        {
+          "client_id": "984367026082-3i7idvrvjjtimcv4scc01co6kir0f2ig.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDaBM3Chhz84hD02ZySP89O95u0VpettGw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "984367026082-3i7idvrvjjtimcv4scc01co6kir0f2ig.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
     }
   ],
   "configuration_version": "1"
