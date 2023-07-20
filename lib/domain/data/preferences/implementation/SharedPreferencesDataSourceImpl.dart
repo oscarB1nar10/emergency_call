@@ -1,5 +1,3 @@
-
-
 import 'package:emergency_call/domain/data/preferences/abstraction/SharedPreferencesDataSource.dart';
 import 'package:emergency_call/framework/data_source/preferences/abstraction/Preferences.dart';
 
@@ -7,7 +5,6 @@ import '../../../../framework/data_source/preferences/implementation/Preferences
 import '../../../../framework/presentation/utility/Countries.dart';
 
 class SharedPreferencesDataSourceImpl implements SharedPreferencesDataSource {
-
   final Preferences _preferences = PreferenceImplementation();
 
   @override
@@ -30,4 +27,23 @@ class SharedPreferencesDataSourceImpl implements SharedPreferencesDataSource {
     return _preferences.getImei();
   }
 
+  @override
+  Future<void> saveSubscriptionToken(String token) async {
+    _preferences.saveSubscriptionToken(token);
+  }
+
+  @override
+  Future getSubscriptionToken() async {
+    return _preferences.getSubscriptionToken();
+  }
+
+  @override
+  Future<void> saveUserId(String id) async {
+    _preferences.saveUserId(id);
+  }
+
+  @override
+  Future<dynamic> getUserId() async {
+    return _preferences.getUserId();
+  }
 }

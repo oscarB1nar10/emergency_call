@@ -2,36 +2,39 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:emergency_call/domain/data/remote/ApiException.dart';
+import 'package:emergency_call/domain/model/SubscriptionModel.dart';
+import 'package:emergency_call/framework/data_source/remote/abstraction/SubscribeRemoteDataSource.dart';
+import 'package:emergency_call/framework/presentation/utility/Strings.dart';
 import 'package:http/http.dart';
 
-import '../../../../domain/model/UserPhone.dart';
-import '../../../presentation/utility/Strings.dart';
-import '../abstraction/UserPhoneRemoteDataSource.dart';
-
-class UserPhoneRemoteDataSourceImpl implements UserPhoneRemoteDataSource {
+class SubscribeRemoteDataSourceImpl
+    implements SubscribeRemoteDataSource {
   // Instance of http client to connect with the server
   Client httpClient = Client();
 
   @override
-  Future saveUserPhone(UserPhone userPhone) async {
+  Future subscribeToPremium(
+      SubscriptionModel subscriptionPremiumModel) async {
     var responseJson;
-    const endpoint = "/prod/ec_save_phone";
+    const endpoint = "/prod/ec_subscribe";
 
     var uri = Uri.https(Strings.baseApiUrl, endpoint);
-    print("UserPhone in remote data source: $uri");
+    print("subscribe to premium end-point: $uri");
 
     try {
-      final response = await httpClient.post(uri, headers: {
-        HttpHeaders.contentTypeHeader: 'application/json',
-        "x-api-key": Strings.apiKey
-      },body: jsonEncode(userPhone));
+      final response = await httpClient.post(uri,
+          headers: {
+            HttpHeaders.contentTypeHeader: 'application/json',
+            "x-api-key": Strings.apiKey
+          },
+          body: jsonEncode(subscriptionPremiumModel));
 
       responseJson = _returnResponse(response);
     } on SocketOption {
       throw FetchDataException('No internet connection');
     }
 
-    return responseJson;
+    return responseJson['token'];
   }
 
   // Returns a Json object with the server response if status 200

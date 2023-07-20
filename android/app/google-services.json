@@ -51,6 +51,14 @@
       },
       "oauth_client": [
         {
+          "client_id": "984367026082-7k60k5upvasl68aiabq13tqej53f04kn.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.b1nar10.emergency_call2",
+            "certificate_hash": "52bd3083f89c512e9842a57d3fc56a5629ba2919"
+          }
+        },
+        {
           "client_id": "984367026082-82qrdki6lse5o1rn11jp69gf9n3rtobh.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {

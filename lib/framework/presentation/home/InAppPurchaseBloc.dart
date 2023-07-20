@@ -1,10 +1,21 @@
 import 'dart:async';
 
+import 'package:emergency_call/domain/interactors/Subscribe.dart';
+import 'package:emergency_call/domain/model/SubscriptionModel.dart';
 import 'package:in_app_purchase/in_app_purchase.dart';
 
+import '../../../domain/interactors/GetUserId.dart';
+
 class InAppPurchaseBloc {
+  final GetUserId _getUserId = GetUserId();
+  final Subscribe _subscribe = Subscribe();
+
   // Define  product IDs
-  final Set<String> _productIds = {'location_service2', 'location_service', 'location-service-base-plan'};
+  final Set<String> _productIds = {
+    'location_service2',
+    'location_service',
+    'location-service-base-plan'
+  };
 
   // Define the list of products
   List<ProductDetails> _products = [];
@@ -58,10 +69,21 @@ class InAppPurchaseBloc {
             purchaseDetails.status == PurchaseStatus.restored) {
           if (purchaseDetails.pendingCompletePurchase) {
             await InAppPurchase.instance.completePurchase(purchaseDetails);
+            _subscribeUser();
           }
         }
       }
     });
+  }
+
+  Future<void> _subscribeUser() async {
+    var userId = await _getUserId.getUserId();
+    SubscriptionModel subscriptionModel =
+        SubscriptionModel(userId: userId, subscriptionStatus: "premium");
+
+    // Subscribe user
+    var token = await _subscribe.subscribe(subscriptionModel);
+    print("Token retrived: $token");
   }
 
   // Trigger purchase

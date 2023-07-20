@@ -5,7 +5,6 @@ import '../../../presentation/utility/SharedPreferencesHelper.dart';
 import '../abstraction/Preferences.dart';
 
 class PreferenceImplementation implements Preferences {
-
   @override
   Future<Country> getCountryDialCode() async {
     final prefs = await SharedPreferences.getInstance();
@@ -24,7 +23,8 @@ class PreferenceImplementation implements Preferences {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(
         SharedPreferencesHelper.countryIsoCodeKey, country.isoCode);
-    await prefs.setString(SharedPreferencesHelper.countryCodeKey, country.phoneCode);
+    await prefs.setString(
+        SharedPreferencesHelper.countryCodeKey, country.phoneCode);
 
     return true;
   }
@@ -41,6 +41,41 @@ class PreferenceImplementation implements Preferences {
     try {
       final imei = prefs.getString(SharedPreferencesHelper.imei);
       return imei ?? "";
+    } catch (e) {
+      return "";
+    }
+  }
+
+  @override
+  Future<void> saveSubscriptionToken(String token) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(SharedPreferencesHelper.subscriptionToken, token);
+  }
+
+  @override
+  Future getSubscriptionToken() async {
+    final prefs = await SharedPreferences.getInstance();
+    try {
+      final subscriptionToken =
+          prefs.getString(SharedPreferencesHelper.subscriptionToken);
+      return subscriptionToken ?? "";
+    } catch (e) {
+      return "";
+    }
+  }
+
+  @override
+  Future<void> saveUserId(String id) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(SharedPreferencesHelper.userId, id);
+  }
+
+  @override
+  Future getUserId() async {
+    final prefs = await SharedPreferences.getInstance();
+    try {
+      final userId = prefs.getString(SharedPreferencesHelper.userId);
+      return userId ?? "";
     } catch (e) {
       return "";
     }
