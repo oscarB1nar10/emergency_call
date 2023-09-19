@@ -4,6 +4,7 @@ import 'package:emergency_call/domain/model/FavoriteContact.dart';
 import 'package:emergency_call/domain/model/UserPhone.dart';
 import 'package:emergency_call/framework/presentation/home/ContactsPageWidget.dart';
 import 'package:emergency_call/framework/presentation/home/DrawerListWidget.dart';
+import 'package:emergency_call/framework/presentation/home/ErrorBanner.dart';
 import 'package:emergency_call/framework/presentation/home/HomeBloc.dart';
 import 'package:emergency_call/framework/presentation/home/HomeEvents.dart';
 import 'package:emergency_call/framework/presentation/model/PersonalContact.dart';
@@ -37,7 +38,11 @@ class _HomeScreenWidget extends State<HomeScreenWidget> {
   final location = Location.instance;
   var showCountryCodeList = false;
   var imei = "";
-  late StreamSubscription<dynamic> _streamSubscription;
+  bool isBlocLoading = false;
+  bool showErrorBanner = false;
+  String errorMessage = "";
+  StreamSubscription<dynamic>? _streamSubscription;
+  StreamSubscription<dynamic>? _errorSubscription;
 
   onSendStatus(SendStatus status) {
     setState(() {
@@ -57,9 +62,12 @@ class _HomeScreenWidget extends State<HomeScreenWidget> {
   void initState() {
     super.initState();
     homeBloc = BlocProvider.of<HomeBloc>(context, listen: false);
+    _onGetContactInfo();
     _onSendImei();
     _onGetUserCredentials();
     _onGetCountryDial();
+    _eventListener();
+    _errorListener();
   }
 
   @override
@@ -71,49 +79,107 @@ class _HomeScreenWidget extends State<HomeScreenWidget> {
         actions: const <Widget>[CountryIconWidget(), LocationWidget()],
         centerTitle: true,
       ),
-      body: SingleChildScrollView(
-          child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [showContactInfo(), showEmergencyBell()])),
+      body: Stack(children: [
+        Center(
+          child: ConstrainedBox(
+            constraints:
+            BoxConstraints(minHeight: MediaQuery
+                .of(context)
+                .size
+                .height),
+            child: SingleChildScrollView(
+                child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      showContactInfo(homeBloc.state),
+                      showEmergencyBell(homeBloc.state)
+                    ])),
+          ),
+        ),
+        if (showErrorBanner) ErrorBanner(message: errorMessage),
+        if (isBlocLoading) _buildProgressIndicator()
+      ]),
       drawer: const Drawer(
         child: DrawerListWidget(),
       ),
       floatingActionButton: FloatingActionButton(
-        child: const Icon(Icons.add),
         onPressed: () {
           requestContactPermissions(context);
         },
         backgroundColor: Colors.red,
+        child: const Icon(Icons.add),
+      ),
+    );
+  }
+
+  Widget _buildProgressIndicator() {
+    return Positioned.fill(
+      child: Container(
+        color: Colors.black38, // semi-transparent overlay
+        child: const Center(
+          child:
+          CircularProgressIndicator(), // progress indicator in the center
+        ),
       ),
     );
   }
 
   Future<void> requestContactPermissions(BuildContext context) async {
     var statusContactsPermission =
-        await permissions.Permission.contacts.request();
+    await permissions.Permission.contacts.request();
     var statusLocationPermission =
-        await permissions.Permission.location.request();
+    await permissions.Permission.location.request();
 
     if (statusContactsPermission.isGranted) {
-      _navigateContactsPage(context);
+      _navigateContactsPage();
     } else if (statusContactsPermission ==
-        permissions.PermissionStatus.denied) {
-      // TODO("Handle negation of permissions through an explanation")
-    } else if (statusContactsPermission ==
-        permissions.PermissionStatus.permanentlyDenied) {
-      // TODO("Handle negation of permissions through an explanation")
+        permissions.PermissionStatus.denied ||
+        statusContactsPermission ==
+            permissions.PermissionStatus.permanentlyDenied) {
+      _showPermissionExplanationDialog('Contacts');
     }
 
     // Location permissions
     if (statusLocationPermission.isGranted) {
       // TODO("Handle negation of permissions through an explanation")
-    } else if (statusLocationPermission.isDenied) {}
+    } else if (statusLocationPermission.isDenied) {
+      _showPermissionExplanationDialog('Location');
+    }
+  }
+
+  void _showPermissionExplanationDialog(String permissionName) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('$permissionName Permission Denied'),
+          content: Text(
+              'The $permissionName permission is required for this feature to work. Please grant the permission for a better experience.'),
+          actions: [
+            TextButton(
+              child: const Text('Later'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+            TextButton(
+              child: const Text('Open Settings'),
+              onPressed: () {
+                // Redirect to app settings
+                permissions.openAppSettings();
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
+    );
   }
 
   // A method that launches the SelectionScreen and awaits the result from
 // Navigator.pop.
-  void _navigateContactsPage(BuildContext context) async {
+  void _navigateContactsPage() async {
     // Navigator.push returns a Future that completes after calling
     // Navigator.pop on the Selection Screen.
     final result = await Navigator.push(
@@ -138,92 +204,157 @@ class _HomeScreenWidget extends State<HomeScreenWidget> {
     });
   }
 
-  Widget showContactInfo() {
+  openWhatsApp(List<FavoriteContact> favoriteContacts,
+      String emergencyMessage) async {
+    for (var favoriteContact in favoriteContacts) {
+      // Remove +countryDialCode if exist
+      Country country = homeBloc.state.country;
+      var phoneCode = "";
+      if (country.phoneCode.isEmpty) {
+        phoneCode = Strings.countryDialCode;
+      } else {
+        phoneCode = country.phoneCode;
+      }
+      var number =
+      CountryHelper.phoneNumberWithoutCountryCode(favoriteContact.phone);
+
+      String whatsappURLAndroid =
+          "whatsapp://send?phone=$phoneCode-$number&text=${Uri.encodeFull(
+          Strings.getEmergencyDefaultMessage(
+              favoriteContact.name, emergencyMessage))}";
+
+      if (await canLaunchUrl(Uri.parse(whatsappURLAndroid))) {
+        await launchUrl(Uri.parse(whatsappURLAndroid));
+      }
+    }
+  }
+
+  _onGetContactInfo() {
     // Launch event to retrieve saved favorite contacts.
     homeBloc.add(const EventGetFavoriteContact());
+  }
 
-    return BlocBuilder<HomeBloc, HomeState>(builder: (context, state) {
-      return Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: <Widget>[
-          if (state.favoriteContactsDataSource.isNotEmpty)
-            Center(
-              child: ListView.builder(
-                shrinkWrap: true,
-                // Let the ListView know how many items it needs to build.
-                itemCount: state.favoriteContactsDataSource.length,
-                // Provide a builder function. This is where the magic happens.
-                // Convert each item into a widget based on the type of item it is.
-                itemBuilder: (context, index) {
-                  final item = state.favoriteContactsDataSource[index];
+  _onSendImei() async {
+    var serialImei = await UniqueIdentifier.serial;
+    setState(() {
+      imei = serialImei ?? "";
+    });
+    homeBloc.add(EventSaveImei(imei));
+  }
 
-                  return Dismissible(
-                      key: UniqueKey(),
-                      // Show a red background as the item is swiped away.
-                      background: Container(
-                        color: Colors.deepOrangeAccent,
-                        child: Padding(
-                          padding: const EdgeInsets.all(16),
-                          child: Row(
-                            children: const [
-                              Icon(Icons.delete, color: Colors.white),
-                              Text('Delete as emergency contact',
-                                  style: TextStyle(color: Colors.white)),
-                            ],
-                          ),
-                        ),
-                      ),
-                      // Provide a function that tells the app
-                      // what to do after an item has been swiped away.
-                      onDismissed: (direction) {
-                        homeBloc.add(EventDeleteFavoriteContact(item));
-                      },
-                      child: Card(
-                          margin: const EdgeInsets.symmetric(
-                              horizontal: 16, vertical: 8),
-                          child: ListTile(
-                            leading: const Icon(Icons.account_box, size: 48),
-                            title: Text(item.name),
-                            subtitle: Text(item.phone),
-                          )));
-                },
-              ),
-            )
-        ],
-      );
+  _onGetUserCredentials() async {
+    // Get user credentials from Google account
+    homeBloc.add(const EventGetUserCredentials());
+  }
+
+  _eventListener() {
+    _streamSubscription?.cancel(); // Cancel any existing subscription
+
+    _streamSubscription ??= homeBloc.stream.listen((state) {
+      if (state.favoriteContacts.isNotEmpty && !state.hasShownContactInfo) {
+        showContactInfo(homeBloc.state);
+        homeBloc.add(EventUpdateShownContactInfo());
+      }
+
+      if (state.favoriteContacts.isNotEmpty && !state.hasShownEmergencyBell) {
+        showEmergencyBell(homeBloc.state);
+        homeBloc.add(EventUpdateShownEmergencyBell());
+      }
+
+      setState(() {
+        isBlocLoading = state.isLoading;
+      });
     });
   }
 
-  Widget showEmergencyBell() {
-    return BlocBuilder<HomeBloc, HomeState>(builder: (context, state) {
-      if (state.favoriteContactsDataSource.isNotEmpty) {
-        return Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            Stack(
-              children: [
-                const Image(image: AssetImage('assets/help.png')),
-                Positioned.fill(
-                    child: Material(
-                  color: Colors.transparent,
-                  child: InkWell(
-                    onTap: () {
-                      // Send SMS
-                      triggerEmergencySMS(state.favoriteContactsDataSource);
-                    },
-                  ),
-                ))
-              ],
-            )
-          ],
-        );
-      } else {
-        // Empty widget
-        return const SizedBox.shrink();
+  _errorListener() {
+    _errorSubscription?.cancel(); // Cancel any existing subscription
+    _errorSubscription = homeBloc.stream.listen((state) {
+      if (state.errorMessage.isNotEmpty) {
+        _showErrorBanner(state.errorMessage);
       }
     });
+  }
+
+  Widget showContactInfo(HomeState state) {
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: <Widget>[
+        if (state.favoriteContacts.isNotEmpty)
+          Center(
+            child: ListView.builder(
+              shrinkWrap: true,
+              // Let the ListView know how many items it needs to build.
+              itemCount: state.favoriteContacts.length,
+              // Provide a builder function. This is where the magic happens.
+              // Convert each item into a widget based on the type of item it is.
+              itemBuilder: (context, index) {
+                final item = state.favoriteContacts[index];
+
+                return Dismissible(
+                    key: UniqueKey(),
+                    // Show a red background as the item is swiped away.
+                    background: Container(
+                      color: Colors.deepOrangeAccent,
+                      child: Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Row(
+                          children: const [
+                            Icon(Icons.delete, color: Colors.white),
+                            Text('Delete as emergency contact',
+                                style: TextStyle(color: Colors.white)),
+                          ],
+                        ),
+                      ),
+                    ),
+                    // Provide a function that tells the app
+                    // what to do after an item has been swiped away.
+                    onDismissed: (direction) {
+                      homeBloc.add(EventDeleteFavoriteContact(item));
+                    },
+                    child: Card(
+                        margin: const EdgeInsets.symmetric(
+                            horizontal: 16, vertical: 8),
+                        child: ListTile(
+                          leading: const Icon(Icons.account_box, size: 48),
+                          title: Text(item.name),
+                          subtitle: Text(item.phone),
+                        )));
+              },
+            ),
+          )
+      ],
+    );
+  }
+
+  Widget showEmergencyBell(HomeState state) {
+    if (state.favoriteContacts.isNotEmpty) {
+      return Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Stack(
+            children: [
+              const Image(image: AssetImage('assets/help.png')),
+              Positioned.fill(
+                  child: Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      onTap: () {
+                        // Send SMS
+                        triggerEmergencySMS(state.favoriteContacts);
+                      },
+                    ),
+                  ))
+            ],
+          )
+        ],
+      );
+    } else {
+      // Empty widget
+      return const SizedBox.shrink();
+    }
   }
 
   Future<void> triggerEmergencySMS(
@@ -242,7 +373,7 @@ class _HomeScreenWidget extends State<HomeScreenWidget> {
       // Check internet connection to determine if send emergency message through
       // WhatsApp or Sms
       bool isConnectedToInternet =
-          await NetworkConnection.isConnectedToInternet();
+      await NetworkConnection.isConnectedToInternet();
       if (isConnectedToInternet == true) {
         openWhatsApp(favoriteContacts, url);
       } else {
@@ -257,54 +388,9 @@ class _HomeScreenWidget extends State<HomeScreenWidget> {
       telephony.sendSms(
           to: favoriteContact.phone,
           message:
-              Strings.messageToSend(favoriteContact.name, emergencyMessage),
+          Strings.messageToSend(favoriteContact.name, emergencyMessage),
           statusListener: onSendStatus);
     }
-  }
-
-  openWhatsApp(
-      List<FavoriteContact> favoriteContacts, String emergencyMessage) async {
-    for (var favoriteContact in favoriteContacts) {
-      // Remove +countryDialCode if exist
-      Country country = homeBloc.state.country;
-      var phoneCode = "";
-      if (country.phoneCode.isEmpty) {
-        phoneCode = Strings.countryDialCode;
-      } else {
-        phoneCode = country.phoneCode;
-      }
-      var number =
-          CountryHelper.phoneNumberWithoutCountryCode(favoriteContact.phone);
-
-      String whatsappURLAndroid =
-          "whatsapp://send?phone=$phoneCode-$number&text=${Uri.encodeFull(Strings.getEmergencyDefaultMessage(favoriteContact.name, emergencyMessage))}";
-
-      if (await canLaunchUrl(Uri.parse(whatsappURLAndroid))) {
-        await launchUrl(Uri.parse(whatsappURLAndroid));
-      }
-    }
-  }
-
-  _onSendImei() async {
-    var serialImei = await UniqueIdentifier.serial;
-    setState(() {
-      imei = serialImei ?? "";
-    });
-    homeBloc.add(EventSaveImei(imei));
-  }
-
-  _onGetUserCredentials() async {
-    // Get user credentials from Google account
-    homeBloc.add(const EventGetUserCredentials());
-    homeBloc.stream.listen((state) {
-      if (state.userCredentials != null) {
-        // Save UserPhone in server
-        homeBloc.add(EventSaveUserPhone(UserPhone(
-            id: state.userCredentials?.user?.uid ?? "",
-            imei: imei ?? "",
-            name: "")));
-      }
-    });
   }
 
   _onGetCountryDial() {
@@ -312,10 +398,24 @@ class _HomeScreenWidget extends State<HomeScreenWidget> {
     homeBloc.add(const EventGetCountryDealCode());
   }
 
+  void _showErrorBanner(String errorMessage) {
+    setState(() {
+      showErrorBanner = true;
+      this.errorMessage = errorMessage;
+    });
+
+    Future.delayed(const Duration(seconds: 5), () {
+      setState(() {
+        showErrorBanner = false;
+      });
+    });
+  }
+
   @override
   void dispose() {
-    super.dispose();
     ForegroundService().stop();
-    _streamSubscription.cancel();
+    _streamSubscription?.cancel();
+    _errorSubscription?.cancel();
+    super.dispose();
   }
 }

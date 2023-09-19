@@ -14,7 +14,7 @@ class UserPhoneRemoteDataSourceImpl implements UserPhoneRemoteDataSource {
 
   @override
   Future saveUserPhone(UserPhone userPhone) async {
-    var responseJson;
+    var tokenResponse;
     const endpoint = "/prod/ec_save_phone";
 
     var uri = Uri.https(Strings.baseApiUrl, endpoint);
@@ -26,22 +26,29 @@ class UserPhoneRemoteDataSourceImpl implements UserPhoneRemoteDataSource {
         "x-api-key": Strings.apiKey
       },body: jsonEncode(userPhone));
 
-      responseJson = _returnResponse(response);
+      tokenResponse = _returnResponse(response);
     } on SocketOption {
       throw FetchDataException('No internet connection');
     }
 
-    return responseJson;
+    return tokenResponse;
   }
 
   // Returns a Json object with the server response if status 200
   dynamic _returnResponse(Response response) {
     switch (response.statusCode) {
       case 200:
+        var token = "";
         var responseJson = json.decode(response.body);
-        print(responseJson);
-        return responseJson;
 
+        if (responseJson["statusCode"] == 200) {
+          var bodyContent = json.decode(responseJson['body']);
+          token = bodyContent['token'];
+        } else if (responseJson["errorMessage"]?.contains("Task timed out") == true) {
+          return null;
+        }
+
+        return token;
       case 400:
         throw BadRequestException(response.body);
       case 401:
