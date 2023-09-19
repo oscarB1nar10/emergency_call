@@ -70,3 +70,18 @@ class EventGetImei extends HomeEvents {
 class EventGetUserCredentials extends HomeEvents {
   const EventGetUserCredentials();
 }
+
+class EventGetSubscriptionToken extends HomeEvents {
+  const EventGetSubscriptionToken();
+}
+
+class EventUpdateSaveUserPhone extends HomeEvents {}
+
+class EventUpdateShownContactInfo extends HomeEvents {}
+
+class EventUpdateShownEmergencyBell extends HomeEvents {}
+
+class EventShowSnackbarError extends HomeEvents {
+  final String errorMessage;
+  const EventShowSnackbarError(this.errorMessage);
+}

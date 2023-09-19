@@ -19,7 +19,7 @@ class ContactsCacheDataSourceImpl implements ContactsCacheDataSource {
   }
 
   @override
-  Future deleteFavoriteContact(int id) {
-    return _contactsCacheImplementation.deleteFavoriteContact(id);
+  Future deleteFavoriteContact(String phone) {
+    return _contactsCacheImplementation.deleteFavoriteContact(phone);
   }
 }
