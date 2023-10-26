@@ -41,14 +41,13 @@ class ContactsCacheImplementation implements ContactsCache {
   }
 
   @override
-  Future<void> deleteFavoriteContact(int id) async {
+  Future<void> deleteFavoriteContact(String phone) async {
     final db = await DatabaseHelper.instance.database;
 
     // Remove the favorite contact from the database.
     await db.delete(TABLE_NAME,
         // Use a `where` clause to delete a specific favorite contact.
-        where: 'id = ?',
-        // Pass the Dog's id as a whereArg to prevent SQL injection.
-        whereArgs: [id]);
+        where: 'phone = ?',
+        whereArgs: [phone]);
   }
 }

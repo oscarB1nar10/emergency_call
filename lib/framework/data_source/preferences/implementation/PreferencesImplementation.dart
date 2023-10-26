@@ -5,41 +5,97 @@ import '../../../presentation/utility/SharedPreferencesHelper.dart';
 import '../abstraction/Preferences.dart';
 
 class PreferenceImplementation implements Preferences {
-  final Future<SharedPreferences> _prefs = SharedPreferences.getInstance();
-
   @override
   Future<Country> getCountryDialCode() async {
-    final _dialCode = await _prefs.then((SharedPreferences prefs) {
-      return prefs.getString(SharedPreferencesHelper.countryCodeKey) ?? "";
-    });
+    final prefs = await SharedPreferences.getInstance();
+    final dialCode =
+        prefs.getString(SharedPreferencesHelper.countryCodeKey) ?? "";
 
-    final _isoCode = await _prefs.then((SharedPreferences prefs) {
-      return prefs.getString(SharedPreferencesHelper.countryIsoCodeKey) ?? "";
-    });
+    final isoCode =
+        prefs.getString(SharedPreferencesHelper.countryIsoCodeKey) ?? "";
 
     return Country(
-        isoCode: _isoCode, phoneCode: _dialCode, name: "", iso3Code: "");
+        isoCode: isoCode, phoneCode: dialCode, name: "", iso3Code: "");
   }
 
   @override
-  Future<void> saveCountryDialCode(Country country) async {
-    final SharedPreferences prefs = await _prefs;
-    prefs.setString(SharedPreferencesHelper.countryIsoCodeKey, country.isoCode);
-    prefs.setString(SharedPreferencesHelper.countryCodeKey, country.phoneCode);
+  Future<bool> saveCountryDialCode(Country country) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(
+        SharedPreferencesHelper.countryIsoCodeKey, country.isoCode);
+    await prefs.setString(
+        SharedPreferencesHelper.countryCodeKey, country.phoneCode);
+
+    return true;
   }
 
   @override
   Future<void> saveImei(String imei) async {
-    final SharedPreferences prefs = await _prefs;
-    prefs.setString(SharedPreferencesHelper.imei, imei);
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(SharedPreferencesHelper.imei, imei);
   }
 
   @override
   Future<String> getImei() async {
-    final _imei = await _prefs.then((SharedPreferences prefs) {
-      return prefs.getString(SharedPreferencesHelper.imei) ?? "";
-    });
+    final prefs = await SharedPreferences.getInstance();
+    try {
+      final imei = prefs.getString(SharedPreferencesHelper.imei);
+      return imei ?? "";
+    } catch (e) {
+      return "";
+    }
+  }
 
-    return _imei;
+  @override
+  Future<void> saveSubscriptionToken(String token) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(SharedPreferencesHelper.subscriptionToken, token);
+  }
+
+  @override
+  Future getSubscriptionToken() async {
+    final prefs = await SharedPreferences.getInstance();
+    try {
+      final subscriptionToken =
+          prefs.getString(SharedPreferencesHelper.subscriptionToken);
+      return subscriptionToken ?? "";
+    } catch (e) {
+      return "";
+    }
+  }
+
+  @override
+  Future<void> saveUserId(String id) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(SharedPreferencesHelper.userId, id);
+  }
+
+  @override
+  Future getUserId() async {
+    final prefs = await SharedPreferences.getInstance();
+    try {
+      final userId = prefs.getString(SharedPreferencesHelper.userId);
+      return userId ?? "";
+    } catch (e) {
+      return "";
+    }
+  }
+
+  @override
+  Future<void> saveFirstTimeLogin(bool isFirstTimeLogin) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(SharedPreferencesHelper.firstTimeLogin, isFirstTimeLogin);
+  }
+
+  @override
+  Future getFirstTimeLogin() async {
+    final prefs = await SharedPreferences.getInstance();
+    try {
+      final isFirstTimeLogin =
+          prefs.getBool(SharedPreferencesHelper.firstTimeLogin);
+      return isFirstTimeLogin ?? false;
+    } catch (e) {
+      return false;
+    }
   }
 }

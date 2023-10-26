@@ -4,7 +4,7 @@ class DeleteFavoriteContact {
   final ContactsCacheDataSourceImpl _contactsCacheDataSourceImpl =
       ContactsCacheDataSourceImpl();
 
-  Future<dynamic> deleteFavoriteContacts(int id) async {
-    return _contactsCacheDataSourceImpl.deleteFavoriteContact(id);
+  Future<dynamic> deleteFavoriteContacts(String phone) async {
+    return _contactsCacheDataSourceImpl.deleteFavoriteContact(phone);
   }
 }

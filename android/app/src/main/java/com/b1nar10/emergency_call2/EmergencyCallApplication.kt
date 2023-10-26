@@ -1,4 +1,4 @@
-package com.b1nar10.emergency_call
+package com.b1nar10.emergency_call2
 
 import android.app.NotificationChannel
 import android.app.NotificationManager

@@ -1,12 +1,16 @@
 import 'dart:io';
 
-import 'package:emergency_call/framework/presentation/home/HomeBloc.dart';
-import 'package:emergency_call/framework/presentation/home/HomeScreenWidget.dart';
+import 'package:emergency_call/framework/presentation/home/dashboard/HomeBloc.dart';
+import 'package:emergency_call/framework/presentation/home/subscription/PurchaseWidget.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_intro/flutter_intro.dart';
 
+import 'framework/presentation/home/dashboard/HomeScreenWidget.dart';
+import 'framework/presentation/home/subscription/InAppPurchaseBloc.dart';
+import 'framework/presentation/home/location/LocationBloc.dart';
 import 'framework/presentation/utility/MyHttpOverrides.dart';
 
 Future<void> main() async {
@@ -36,27 +40,39 @@ startServiceInAndroidPlatform() async {
 class MyApp extends StatelessWidget {
   const MyApp({Key? key}) : super(key: key);
 
-  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
-    return BlocProvider<HomeBloc>(
-      create: (context) => HomeBloc(),
-      child: MaterialApp(
-        title: 'Flutter Demo',
-        theme: ThemeData(
-          // This is the theme of your application.
-          //
-          // Try running your application with "flutter run". You'll see the
-          // application has a blue toolbar. Then, without quitting the app, try
-          // changing the primarySwatch below to Colors.green and then invoke
-          // "hot reload" (press "r" in the console where you ran "flutter run",
-          // or simply save your changes to "hot reload" in a Flutter IDE).
-          // Notice that the counter didn't reset back to zero; the application
-          // is not restarted.
-          primarySwatch: Colors.red,
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider<HomeBloc>(
+          create: (context) => HomeBloc(),
         ),
-        home: const HomeScreenWidget(),
+        BlocProvider<LocationBloc>(
+          create: (context) => LocationBloc(),
+        ),
+        BlocProvider<InAppPurchaseBloc>(
+          create: (context) => InAppPurchaseBloc(),
+        )
+      ],
+      child: Intro(
+        padding: const EdgeInsets.all(8),
+        borderRadius: const BorderRadius.all(Radius.circular(4)),
+        maskColor: const Color.fromRGBO(0, 0, 0, .6),
+        buttonTextBuilder: (order) => 'Next',
+        child: MaterialApp(
+          title: 'Flutter Demo',
+          theme: ThemeData(
+            primarySwatch: Colors.red,
+          ),
+          initialRoute: '/home',
+          routes: {
+            '/home': (context) => const HomeScreenWidget(),
+            '/subscriptions': (context) => const SubscriptionWidget()
+            // Add more routes as needed
+          },
+        ),
       ),
     );
   }
 }
+

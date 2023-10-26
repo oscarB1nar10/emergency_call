@@ -5,43 +5,50 @@ import 'package:emergency_call/domain/data/remote/ApiException.dart';
 import 'package:http/http.dart';
 
 import '../../../../domain/model/UserPhone.dart';
+import '../../../presentation/utility/Strings.dart';
 import '../abstraction/UserPhoneRemoteDataSource.dart';
 
 class UserPhoneRemoteDataSourceImpl implements UserPhoneRemoteDataSource {
-  final String baseUrl = "192.168.20.21";
-
-  // Instance of http client to connection with the server
+  // Instance of http client to connect with the server
   Client httpClient = Client();
 
   @override
   Future saveUserPhone(UserPhone userPhone) async {
-    var responseJson;
-    const endpoint = "/api/userPhone";
-    var queryParameters = {'id': userPhone.id, 'name': userPhone.name};
+    var tokenResponse;
+    const endpoint = "/prod/ec_save_phone";
 
-    var uri = Uri.https(baseUrl, endpoint, queryParameters);
+    var uri = Uri.https(Strings.baseApiUrl, endpoint);
     print("UserPhone in remote data source: $uri");
 
     try {
-      final response = await httpClient.post(uri,
-          headers: {HttpHeaders.contentTypeHeader: 'application/json'});
+      final response = await httpClient.post(uri, headers: {
+        HttpHeaders.contentTypeHeader: 'application/json',
+        "x-api-key": Strings.apiKey
+      },body: jsonEncode(userPhone));
 
-      responseJson = _returnResponse(response);
+      tokenResponse = _returnResponse(response);
     } on SocketOption {
       throw FetchDataException('No internet connection');
     }
 
-    return responseJson;
+    return tokenResponse;
   }
 
   // Returns a Json object with the server response if status 200
   dynamic _returnResponse(Response response) {
     switch (response.statusCode) {
       case 200:
+        var token = "";
         var responseJson = json.decode(response.body);
-        print(responseJson);
-        return responseJson;
 
+        if (responseJson["statusCode"] == 200) {
+          var bodyContent = json.decode(responseJson['body']);
+          token = bodyContent['token'];
+        } else if (responseJson["errorMessage"]?.contains("Task timed out") == true) {
+          return null;
+        }
+
+        return token;
       case 400:
         throw BadRequestException(response.body);
       case 401:

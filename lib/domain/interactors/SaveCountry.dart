@@ -7,7 +7,7 @@ class SaveCountry {
   final SharedPreferencesDataSource _sharedPreferencesDataSource =
       SharedPreferencesDataSourceImpl();
 
-  Future<void> saveCountryDialCode(Country country) async {
-    _sharedPreferencesDataSource.saveCountry(country);
+  Future<dynamic> saveCountryDialCode(Country country) async {
+    return _sharedPreferencesDataSource.saveCountry(country);
   }
 }
