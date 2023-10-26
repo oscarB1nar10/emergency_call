@@ -11,4 +11,6 @@ class Preferences {
   Future<dynamic> getUserId() async {}
   Future<void> saveSubscriptionToken(String token) async {}
   Future<dynamic> getSubscriptionToken() async {}
+  Future<void> saveFirstTimeLogin(bool isFirstTimeLogin) async {}
+  Future<dynamic> getFirstTimeLogin() async {}
 }

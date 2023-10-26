@@ -2,7 +2,7 @@ import 'package:emergency_call/domain/model/FavoriteContact.dart';
 import 'package:equatable/equatable.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
-import '../utility/Countries.dart';
+import '../../utility/Countries.dart';
 
 class HomeState extends Equatable {
   final List<FavoriteContact> favoriteContactsDataSource;
@@ -14,6 +14,7 @@ class HomeState extends Equatable {
   final bool hasSavedUserPhone;
   final bool hasShownContactInfo;
   final bool hasShownEmergencyBell;
+  final bool isFirstTimeLogin;
   final String errorMessage;
   final bool isLoading;
 
@@ -26,6 +27,7 @@ class HomeState extends Equatable {
     this.hasSavedUserPhone = false,
     this.hasShownContactInfo = false,
     this.hasShownEmergencyBell = false,
+    this.isFirstTimeLogin = false,
     this.errorMessage = "",
     this.isLoading = false});
 
@@ -39,6 +41,7 @@ class HomeState extends Equatable {
     bool? hasSavedUserPhone,
     bool? hasShownContactInfo,
     bool? hasShownEmergencyBell,
+    bool? isFirstTimeLogin,
     String? errorMessage,
     bool? isLoading,
   }) {
@@ -53,6 +56,7 @@ class HomeState extends Equatable {
       hasSavedUserPhone: hasSavedUserPhone ?? this.hasSavedUserPhone,
       hasShownContactInfo: hasShownContactInfo ?? this.hasShownContactInfo,
       hasShownEmergencyBell: hasShownEmergencyBell ?? this.hasShownEmergencyBell,
+      isFirstTimeLogin: isFirstTimeLogin ?? this.isFirstTimeLogin,
       errorMessage: errorMessage ?? this.errorMessage,
       isLoading: isLoading ?? this.isLoading,
     );
@@ -70,6 +74,7 @@ class HomeState extends Equatable {
         hasSavedUserPhone,
         hasShownContactInfo,
         hasShownEmergencyBell,
+        isFirstTimeLogin,
         errorMessage,
         isLoading
       ];

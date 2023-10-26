@@ -3,7 +3,7 @@ import 'package:emergency_call/domain/model/UserPhone.dart';
 import 'package:emergency_call/framework/presentation/utility/Countries.dart';
 import 'package:equatable/equatable.dart';
 
-import '../../../domain/model/Location.dart';
+import '../../../../domain/model/Location.dart';
 
 abstract class HomeEvents extends Equatable {
   const HomeEvents();
@@ -80,6 +80,10 @@ class EventUpdateSaveUserPhone extends HomeEvents {}
 class EventUpdateShownContactInfo extends HomeEvents {}
 
 class EventUpdateShownEmergencyBell extends HomeEvents {}
+
+class EventSaveFirstTimeLogin extends HomeEvents {
+  const EventSaveFirstTimeLogin();
+}
 
 class EventShowSnackbarError extends HomeEvents {
   final String errorMessage;

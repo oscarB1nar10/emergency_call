@@ -4,9 +4,9 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../utility/Countries.dart';
 import '../utility/Strings.dart';
-import 'HomeBloc.dart';
-import 'HomeEvents.dart';
-import 'HomeState.dart';
+import 'dashboard/HomeBloc.dart';
+import 'dashboard/HomeEvents.dart';
+import 'dashboard/HomeState.dart';
 
 class CountryIconWidget extends StatefulWidget {
   const CountryIconWidget({Key? key}) : super(key: key);

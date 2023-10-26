@@ -46,4 +46,14 @@ class SharedPreferencesDataSourceImpl implements SharedPreferencesDataSource {
   Future<dynamic> getUserId() async {
     return _preferences.getUserId();
   }
+
+  @override
+  Future<void> saveFirstTimeLogin(bool isFirstTimeLogin) async {
+    return _preferences.saveFirstTimeLogin(isFirstTimeLogin);
+  }
+
+  @override
+  Future<dynamic> getFirstTimeLogin() async {
+    return _preferences.getFirstTimeLogin();
+  }
 }

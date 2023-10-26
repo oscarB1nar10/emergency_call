@@ -1,6 +1,6 @@
 import 'package:equatable/equatable.dart';
 
-import '../../../domain/model/Location.dart';
+import '../../../../domain/model/Location.dart';
 
 
 abstract class LocationEvents extends Equatable {

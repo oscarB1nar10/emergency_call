@@ -80,4 +80,22 @@ class PreferenceImplementation implements Preferences {
       return "";
     }
   }
+
+  @override
+  Future<void> saveFirstTimeLogin(bool isFirstTimeLogin) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(SharedPreferencesHelper.firstTimeLogin, isFirstTimeLogin);
+  }
+
+  @override
+  Future getFirstTimeLogin() async {
+    final prefs = await SharedPreferences.getInstance();
+    try {
+      final isFirstTimeLogin =
+          prefs.getBool(SharedPreferencesHelper.firstTimeLogin);
+      return isFirstTimeLogin ?? false;
+    } catch (e) {
+      return false;
+    }
+  }
 }

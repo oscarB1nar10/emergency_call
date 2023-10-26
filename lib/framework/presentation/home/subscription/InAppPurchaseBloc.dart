@@ -2,11 +2,11 @@ import 'dart:async';
 
 import 'package:emergency_call/domain/interactors/Subscribe.dart';
 import 'package:emergency_call/domain/model/SubscriptionModel.dart';
-import 'package:emergency_call/framework/presentation/home/PurchaseEvents.dart';
+import 'package:emergency_call/framework/presentation/home/subscription/PurchaseEvents.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:in_app_purchase/in_app_purchase.dart';
 
-import '../../../domain/interactors/GetUserId.dart';
+import '../../../../domain/interactors/GetUserId.dart';
 import 'PurchaseState.dart';
 
 class InAppPurchaseBloc extends Bloc<PurchaseEvents, PurchaseState> {
@@ -23,8 +23,8 @@ class InAppPurchaseBloc extends Bloc<PurchaseEvents, PurchaseState> {
   // Define  product IDs
   final Set<String> _productIds = {
     'location_service2',
-    'location_service',
-    'location-service-base-plan'
+    // 'location_service',
+    // 'location-service-base-plan'
   };
 
   // Define the list of products
@@ -91,6 +91,7 @@ class InAppPurchaseBloc extends Bloc<PurchaseEvents, PurchaseState> {
     for (PurchaseDetails purchaseDetails in purchaseDetailsList) {
       if (purchaseDetails.status == PurchaseStatus.pending) {
         // Handle pending state
+        add(const EventSubscribeUser());
       } else {
         if (purchaseDetails.status == PurchaseStatus.error) {
           // Handle error state

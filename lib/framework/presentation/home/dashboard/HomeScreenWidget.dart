@@ -1,12 +1,10 @@
 import 'dart:async';
 
 import 'package:emergency_call/domain/model/FavoriteContact.dart';
-import 'package:emergency_call/domain/model/UserPhone.dart';
 import 'package:emergency_call/framework/presentation/home/ContactsPageWidget.dart';
 import 'package:emergency_call/framework/presentation/home/DrawerListWidget.dart';
 import 'package:emergency_call/framework/presentation/home/ErrorBanner.dart';
-import 'package:emergency_call/framework/presentation/home/HomeBloc.dart';
-import 'package:emergency_call/framework/presentation/home/HomeEvents.dart';
+import 'package:emergency_call/framework/presentation/home/dashboard/HomeBloc.dart';
 import 'package:emergency_call/framework/presentation/model/PersonalContact.dart';
 import 'package:emergency_call/framework/presentation/utility/Countries.dart';
 import 'package:emergency_call/framework/presentation/utility/NetworkConnection.dart';
@@ -14,15 +12,18 @@ import 'package:emergency_call/framework/presentation/utility/Strings.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_foreground_service/flutter_foreground_service.dart';
+import 'package:flutter_intro/flutter_intro.dart';
 import 'package:location/location.dart';
 import 'package:permission_handler/permission_handler.dart' as permissions;
 import 'package:telephony/telephony.dart';
 import 'package:unique_identifier/unique_identifier.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-import 'CountryIconWidget.dart';
+import '../../utility/ErrorMessages.dart';
+import '../CountryIconWidget.dart';
+import '../location/LocationWidget.dart';
+import 'HomeEvents.dart';
 import 'HomeState.dart';
-import 'LocationWidget.dart';
 
 class HomeScreenWidget extends StatefulWidget {
   const HomeScreenWidget({Key? key}) : super(key: key);
@@ -38,6 +39,7 @@ class _HomeScreenWidget extends State<HomeScreenWidget> {
   final location = Location.instance;
   var showCountryCodeList = false;
   var imei = "";
+  var isFirstTimeLogin = false;
   bool isBlocLoading = false;
   bool showErrorBanner = false;
   String errorMessage = "";
@@ -66,6 +68,7 @@ class _HomeScreenWidget extends State<HomeScreenWidget> {
     _onSendImei();
     _onGetUserCredentials();
     _onGetCountryDial();
+    _onCheckIfFirstTimeLogin();
     _eventListener();
     _errorListener();
   }
@@ -76,25 +79,22 @@ class _HomeScreenWidget extends State<HomeScreenWidget> {
       appBar: AppBar(
         title: const Text(Strings.emergencyCall),
         automaticallyImplyLeading: true,
-        actions: const <Widget>[CountryIconWidget(), LocationWidget()],
+        actions: <Widget>[const CountryIconWidget(), _introLocationWidget()],
         centerTitle: true,
       ),
       body: Stack(children: [
         Center(
           child: ConstrainedBox(
             constraints:
-            BoxConstraints(minHeight: MediaQuery
-                .of(context)
-                .size
-                .height),
+                BoxConstraints(minHeight: MediaQuery.of(context).size.height),
             child: SingleChildScrollView(
                 child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
-                      showContactInfo(homeBloc.state),
-                      showEmergencyBell(homeBloc.state)
-                    ])),
+                  showContactInfo(homeBloc.state),
+                  showEmergencyBell(homeBloc.state)
+                ])),
           ),
         ),
         if (showErrorBanner) ErrorBanner(message: errorMessage),
@@ -103,12 +103,24 @@ class _HomeScreenWidget extends State<HomeScreenWidget> {
       drawer: const Drawer(
         child: DrawerListWidget(),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          requestContactPermissions(context);
-        },
-        backgroundColor: Colors.red,
-        child: const Icon(Icons.add),
+      floatingActionButton: _introAddContacts(),
+    );
+  }
+
+  Widget _introLocationWidget() {
+    return IntroStepBuilder(
+      order: 1,
+      text: 'Tap here to start tracking your device location',
+      padding: const EdgeInsets.symmetric(
+        vertical: -5,
+        horizontal: -5,
+      ),
+      borderRadius: const BorderRadius.all(Radius.circular(64)),
+      //builder: (context, key) => LocationWidget(key: key),
+
+      builder: (context, key) => GestureDetector(
+        key: key,
+        child: const LocationWidget(),
       ),
     );
   }
@@ -119,22 +131,42 @@ class _HomeScreenWidget extends State<HomeScreenWidget> {
         color: Colors.black38, // semi-transparent overlay
         child: const Center(
           child:
-          CircularProgressIndicator(), // progress indicator in the center
+              CircularProgressIndicator(), // progress indicator in the center
         ),
+      ),
+    );
+  }
+
+  Widget _introAddContacts() {
+    return IntroStepBuilder(
+      order: 2,
+      text: 'Tap here to Add favorite contacts',
+      padding: const EdgeInsets.symmetric(
+        vertical: -5,
+        horizontal: -5,
+      ),
+      borderRadius: const BorderRadius.all(Radius.circular(64)),
+      builder: (context, key) => FloatingActionButton(
+        key: key,
+        onPressed: () {
+          requestContactPermissions(context);
+        },
+        backgroundColor: Colors.red,
+        child: const Icon(Icons.add),
       ),
     );
   }
 
   Future<void> requestContactPermissions(BuildContext context) async {
     var statusContactsPermission =
-    await permissions.Permission.contacts.request();
+        await permissions.Permission.contacts.request();
     var statusLocationPermission =
-    await permissions.Permission.location.request();
+        await permissions.Permission.location.request();
 
     if (statusContactsPermission.isGranted) {
       _navigateContactsPage();
     } else if (statusContactsPermission ==
-        permissions.PermissionStatus.denied ||
+            permissions.PermissionStatus.denied ||
         statusContactsPermission ==
             permissions.PermissionStatus.permanentlyDenied) {
       _showPermissionExplanationDialog('Contacts');
@@ -204,8 +236,8 @@ class _HomeScreenWidget extends State<HomeScreenWidget> {
     });
   }
 
-  openWhatsApp(List<FavoriteContact> favoriteContacts,
-      String emergencyMessage) async {
+  openWhatsApp(
+      List<FavoriteContact> favoriteContacts, String emergencyMessage) async {
     for (var favoriteContact in favoriteContacts) {
       // Remove +countryDialCode if exist
       Country country = homeBloc.state.country;
@@ -216,12 +248,16 @@ class _HomeScreenWidget extends State<HomeScreenWidget> {
         phoneCode = country.phoneCode;
       }
       var number =
-      CountryHelper.phoneNumberWithoutCountryCode(favoriteContact.phone);
+          CountryHelper.phoneNumberWithoutCountryCode(favoriteContact.phone);
 
-      String whatsappURLAndroid =
-          "whatsapp://send?phone=$phoneCode-$number&text=${Uri.encodeFull(
-          Strings.getEmergencyDefaultMessage(
-              favoriteContact.name, emergencyMessage))}";
+      // Construct the message including the Google Maps URL
+      String message = Strings.getEmergencyDefaultMessage(favoriteContact.name, emergencyMessage);
+
+      // Encode the entire message
+      String encodedMessage = Uri.encodeComponent(message);
+
+      // Construct the WhatsApp URL
+      String whatsappURLAndroid = "whatsapp://send?phone=$phoneCode$number&text=$encodedMessage";
 
       if (await canLaunchUrl(Uri.parse(whatsappURLAndroid))) {
         await launchUrl(Uri.parse(whatsappURLAndroid));
@@ -261,7 +297,17 @@ class _HomeScreenWidget extends State<HomeScreenWidget> {
         homeBloc.add(EventUpdateShownEmergencyBell());
       }
 
+      if (state.userCredentials != null &&
+          (state.hasSavedUserPhone ||
+              state.errorMessage == ErrorMessages.savePhoneError) &&
+          state.isFirstTimeLogin) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          Intro.of(context).start();
+        });
+      }
+
       setState(() {
+        isFirstTimeLogin = state.isFirstTimeLogin;
         isBlocLoading = state.isLoading;
       });
     });
@@ -297,10 +343,10 @@ class _HomeScreenWidget extends State<HomeScreenWidget> {
                     // Show a red background as the item is swiped away.
                     background: Container(
                       color: Colors.deepOrangeAccent,
-                      child: Padding(
-                        padding: const EdgeInsets.all(16),
+                      child: const Padding(
+                        padding: EdgeInsets.all(16),
                         child: Row(
-                          children: const [
+                          children: [
                             Icon(Icons.delete, color: Colors.white),
                             Text('Delete as emergency contact',
                                 style: TextStyle(color: Colors.white)),
@@ -339,14 +385,14 @@ class _HomeScreenWidget extends State<HomeScreenWidget> {
               const Image(image: AssetImage('assets/help.png')),
               Positioned.fill(
                   child: Material(
-                    color: Colors.transparent,
-                    child: InkWell(
-                      onTap: () {
-                        // Send SMS
-                        triggerEmergencySMS(state.favoriteContacts);
-                      },
-                    ),
-                  ))
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: () {
+                    // Send SMS
+                    triggerEmergencySMS(state.favoriteContacts);
+                  },
+                ),
+              ))
             ],
           )
         ],
@@ -373,7 +419,7 @@ class _HomeScreenWidget extends State<HomeScreenWidget> {
       // Check internet connection to determine if send emergency message through
       // WhatsApp or Sms
       bool isConnectedToInternet =
-      await NetworkConnection.isConnectedToInternet();
+          await NetworkConnection.isConnectedToInternet();
       if (isConnectedToInternet == true) {
         openWhatsApp(favoriteContacts, url);
       } else {
@@ -388,7 +434,7 @@ class _HomeScreenWidget extends State<HomeScreenWidget> {
       telephony.sendSms(
           to: favoriteContact.phone,
           message:
-          Strings.messageToSend(favoriteContact.name, emergencyMessage),
+              Strings.messageToSend(favoriteContact.name, emergencyMessage),
           statusListener: onSendStatus);
     }
   }
@@ -398,6 +444,10 @@ class _HomeScreenWidget extends State<HomeScreenWidget> {
     homeBloc.add(const EventGetCountryDealCode());
   }
 
+  _onCheckIfFirstTimeLogin() {
+    homeBloc.add(const EventSaveFirstTimeLogin());
+  }
+
   void _showErrorBanner(String errorMessage) {
     setState(() {
       showErrorBanner = true;
@@ -405,9 +455,12 @@ class _HomeScreenWidget extends State<HomeScreenWidget> {
     });
 
     Future.delayed(const Duration(seconds: 5), () {
-      setState(() {
-        showErrorBanner = false;
-      });
+      if (mounted) {
+        // Check if the widget is still active
+        setState(() {
+          showErrorBanner = false;
+        });
+      }
     });
   }
 
