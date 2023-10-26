@@ -1,23 +1,25 @@
 import 'package:emergency_call/domain/interactors/AddFavoriteContact.dart';
 import 'package:emergency_call/domain/interactors/GetFavoriteContacts.dart';
+import 'package:emergency_call/domain/interactors/GetFirstTimeLogin.dart';
 import 'package:emergency_call/domain/interactors/GetImei.dart';
 import 'package:emergency_call/domain/interactors/GetSubscriptionToken.dart';
 import 'package:emergency_call/domain/interactors/GetUserCredentials.dart';
 import 'package:emergency_call/domain/interactors/RemoveFavoriteContact.dart';
+import 'package:emergency_call/domain/interactors/SaveFirstTimeLogin.dart';
 import 'package:emergency_call/domain/interactors/SaveImei.dart';
 import 'package:emergency_call/domain/interactors/SaveLocation.dart';
 import 'package:emergency_call/domain/interactors/SaveUserPhone.dart';
 import 'package:emergency_call/domain/model/FavoriteContact.dart';
-import 'package:emergency_call/framework/presentation/home/HomeEvents.dart';
-import 'package:emergency_call/framework/presentation/home/HomeState.dart';
 import 'package:emergency_call/framework/presentation/utility/Countries.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:emergency_call/framework/presentation/home/dashboard/HomeEvents.dart';
 
-import '../../../domain/interactors/GetCountry.dart';
-import '../../../domain/interactors/SaveCountry.dart';
-import '../../../domain/model/UserPhone.dart';
-import '../utility/ErrorMessages.dart';
+import '../../../../domain/interactors/GetCountry.dart';
+import '../../../../domain/interactors/SaveCountry.dart';
+import '../../../../domain/model/UserPhone.dart';
+import '../../utility/ErrorMessages.dart';
+import 'HomeState.dart';
 
 class HomeBloc extends Bloc<HomeEvents, HomeState> {
   HomeBloc() : super(HomeState()) {
@@ -36,6 +38,7 @@ class HomeBloc extends Bloc<HomeEvents, HomeState> {
     on<EventUpdateSaveUserPhone>(_onUpdateSaveUserPhone);
     on<EventUpdateShownContactInfo>(_onUpdateShownContactInfo);
     on<EventUpdateShownEmergencyBell>(_onUpdateShownEmergencyBell);
+    on<EventSaveFirstTimeLogin>(_onCheckIfFirstTimeLogin);
   }
 
   final AddFavoriteContact _addFavoriteContact = AddFavoriteContact();
@@ -49,6 +52,8 @@ class HomeBloc extends Bloc<HomeEvents, HomeState> {
   final GetImei _getImei = GetImei();
   final GetUserCredentials _getUserCredentials = GetUserCredentials();
   final GetSubscriptionToken _getSubscriptionToken = GetSubscriptionToken();
+  final SaveFirstTimeLogin _saveFirstTimeLogin = SaveFirstTimeLogin();
+  final GetFirstTimeLogin _getFirstTimeLogin = GetFirstTimeLogin();
 
   void _onAddFavoriteContact(
       EventAddFavoriteContact event, Emitter<dynamic> emit) {
@@ -111,7 +116,7 @@ class HomeBloc extends Bloc<HomeEvents, HomeState> {
     if (userCredential.credential != null) {
       add(EventSaveUserPhone(UserPhone(
           id: userCredential.user?.uid ?? "",
-          imei: state.imei ?? "",
+          imei: state.imei,
           name: "")));
     }
     emit(state.copyWith(isLoading: false, userCredentials: userCredential));
@@ -166,6 +171,19 @@ class HomeBloc extends Bloc<HomeEvents, HomeState> {
   void _onUpdateShownEmergencyBell(
       EventUpdateShownEmergencyBell event, Emitter<HomeState> emit) {
     emit(state.copyWith(hasShownEmergencyBell: true));
+  }
+
+  Future<void> _onCheckIfFirstTimeLogin(
+      EventSaveFirstTimeLogin event, Emitter<HomeState> emit) async {
+    emit(state.copyWith(isLoading: true));
+    var isFirstTimeLogin = await _getFirstTimeLogin.getFirstTimeLogin();
+    if (isFirstTimeLogin) {
+      _saveFirstTimeLogin.saveFirstTimeLogin(false);
+      emit(state.copyWith(isLoading: false, isFirstTimeLogin: false));
+    } else {
+      _saveFirstTimeLogin.saveFirstTimeLogin(true);
+      emit(state.copyWith(isLoading: false, isFirstTimeLogin: true));
+    }
   }
 
   void _onShowSnackbarError(

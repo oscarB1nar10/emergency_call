@@ -2,11 +2,11 @@ import 'dart:async';
 
 import 'package:emergency_call/domain/model/ErrorType.dart';
 import 'package:emergency_call/domain/model/Location.dart';
-import 'package:emergency_call/framework/presentation/home/HomeBloc.dart';
-import 'package:emergency_call/framework/presentation/home/HomeEvents.dart'
+import 'package:emergency_call/framework/presentation/home/dashboard/HomeBloc.dart';
+import 'package:emergency_call/framework/presentation/home/dashboard/HomeEvents.dart'
     as home_events;
-import 'package:emergency_call/framework/presentation/home/LocationBloc.dart';
-import 'package:emergency_call/framework/presentation/home/LocationEvents.dart'
+import 'package:emergency_call/framework/presentation/home/location/LocationBloc.dart';
+import 'package:emergency_call/framework/presentation/home/location/LocationEvents.dart'
     as location_events;
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -31,6 +31,7 @@ class _LocationWidget extends State<LocationWidget> {
   var isSubscriptionDialogOpen = false;
   bool isBlocLoading = false;
   bool hasTokenBeenHandled = false;
+  Color iconColor = Colors.white; // Default color when token is empty
 
   @override
   void initState() {
@@ -48,7 +49,7 @@ class _LocationWidget extends State<LocationWidget> {
           onTap: () {
             requestLocationPermission(context);
           },
-          child: const Icon(Icons.location_searching),
+          child: Icon(Icons.location_searching, color: iconColor),
         ));
   }
 
@@ -71,20 +72,8 @@ class _LocationWidget extends State<LocationWidget> {
 
     if (locationWhenInUsePermissionStatus.isGranted ||
         locationAlwaysStatus.isGranted) {
-      LocationSettings locationSettings = AndroidSettings(
-          accuracy: LocationAccuracy.medium,
-          distanceFilter: 0,
-          forceLocationManager: true,
-          intervalDuration: const Duration(seconds: 20),
-          //(Optional) Set foreground notification config to keep the app alive
-          //when going to the background
-          foregroundNotificationConfig: const ForegroundNotificationConfig(
-            notificationText:
-                "emergency call app will continue to receive your location even when you aren't using it",
-            notificationTitle: "Running in Background",
-            enableWakeLock: true,
-          ));
-
+      _checkSubscriptionToken();
+      var locationSettings = _getLocationSettings();
       // Cancel any existing subscription before starting a new one
       _locationStreamSubscription?.cancel();
 
@@ -92,10 +81,10 @@ class _LocationWidget extends State<LocationWidget> {
           Geolocator.getPositionStream(locationSettings: locationSettings)
               .listen((Position? position) {
         if (position != null && !isSubscriptionDialogOpen) {
-          if (locationBloc.state.userCredentials == null) {
-            _onGetUserCredentials();
-          } else if (locationBloc.state.token.isEmpty) {
+          if (locationBloc.state.token.isEmpty) {
             _onGetSubscriptionToken();
+          } else if (locationBloc.state.userCredentials == null) {
+            _onGetUserCredentials();
           } else {
             locationBloc.add(location_events.EventSaveLocation(UserLocation(
                 token: locationBloc.state.token,
@@ -144,6 +133,31 @@ class _LocationWidget extends State<LocationWidget> {
     );
   }
 
+  _checkSubscriptionToken() {
+    if (!isSubscriptionDialogOpen) {
+      if (locationBloc.state.token.isEmpty) {
+        _onGetSubscriptionToken();
+      }
+    }
+  }
+
+  LocationSettings _getLocationSettings() {
+    LocationSettings locationSettings = AndroidSettings(
+        accuracy: LocationAccuracy.medium,
+        distanceFilter: 0,
+        forceLocationManager: true,
+        intervalDuration: const Duration(seconds: 20),
+        //(Optional) Set foreground notification config to keep the app alive
+        //when going to the background
+        foregroundNotificationConfig: const ForegroundNotificationConfig(
+          notificationText:
+              "emergency call app will continue to receive your location even when you aren't using it",
+          notificationTitle: "Running in Background",
+          enableWakeLock: true,
+        ));
+    return locationSettings;
+  }
+
   _onGetUserCredentials() async {
     // Get user credentials from Google account
     locationBloc.add(const location_events.EventGetUserCredentials());
@@ -164,6 +178,21 @@ class _LocationWidget extends State<LocationWidget> {
           hasTokenBeenHandled = true;
           requestLocationPermission(context);
         }
+      }
+
+      // Check if the token has changed and update the icon color accordingly
+      if (state.token.isNotEmpty &&
+          iconColor != Colors.lightBlue &&
+          !state.displaySubscriptionDialog) {
+        setState(() {
+          iconColor = Colors.lightBlue;
+        });
+      } else if (state.token.isEmpty &&
+          iconColor != Colors.white &&
+          !state.displaySubscriptionDialog) {
+        setState(() {
+          iconColor = Colors.white;
+        });
       }
 
       if (state.saveLocationResponse?.errorType != null &&

@@ -1,15 +1,16 @@
 import 'dart:io';
 
-import 'package:emergency_call/framework/presentation/home/HomeBloc.dart';
-import 'package:emergency_call/framework/presentation/home/HomeScreenWidget.dart';
-import 'package:emergency_call/framework/presentation/home/PurchaseWidget.dart';
+import 'package:emergency_call/framework/presentation/home/dashboard/HomeBloc.dart';
+import 'package:emergency_call/framework/presentation/home/subscription/PurchaseWidget.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_intro/flutter_intro.dart';
 
-import 'framework/presentation/home/InAppPurchaseBloc.dart';
-import 'framework/presentation/home/LocationBloc.dart';
+import 'framework/presentation/home/dashboard/HomeScreenWidget.dart';
+import 'framework/presentation/home/subscription/InAppPurchaseBloc.dart';
+import 'framework/presentation/home/location/LocationBloc.dart';
 import 'framework/presentation/utility/MyHttpOverrides.dart';
 
 Future<void> main() async {
@@ -39,7 +40,6 @@ startServiceInAndroidPlatform() async {
 class MyApp extends StatelessWidget {
   const MyApp({Key? key}) : super(key: key);
 
-  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
     return MultiBlocProvider(
@@ -54,18 +54,25 @@ class MyApp extends StatelessWidget {
           create: (context) => InAppPurchaseBloc(),
         )
       ],
-      child: MaterialApp(
-        title: 'Flutter Demo',
-        theme: ThemeData(
-          primarySwatch: Colors.red,
+      child: Intro(
+        padding: const EdgeInsets.all(8),
+        borderRadius: const BorderRadius.all(Radius.circular(4)),
+        maskColor: const Color.fromRGBO(0, 0, 0, .6),
+        buttonTextBuilder: (order) => 'Next',
+        child: MaterialApp(
+          title: 'Flutter Demo',
+          theme: ThemeData(
+            primarySwatch: Colors.red,
+          ),
+          initialRoute: '/home',
+          routes: {
+            '/home': (context) => const HomeScreenWidget(),
+            '/subscriptions': (context) => const SubscriptionWidget()
+            // Add more routes as needed
+          },
         ),
-        initialRoute: '/home',
-        routes: {
-          '/home': (context) => const HomeScreenWidget(),
-          '/subscriptions': (context) => const SubscriptionWidget()
-          // Add more routes as needed
-        },
       ),
     );
   }
 }
+

@@ -3,11 +3,10 @@ import 'package:emergency_call/domain/interactors/GetUserCredentials.dart';
 import 'package:emergency_call/domain/interactors/SaveLocation.dart';
 import 'package:emergency_call/domain/model/ErrorType.dart';
 import 'package:emergency_call/domain/model/SaveLocationResponse.dart';
-import 'package:emergency_call/framework/presentation/home/LocationState.dart';
+import 'package:emergency_call/framework/presentation/home/location/LocationState.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../../../domain/model/ErrorType.dart';
 import 'LocationEvents.dart';
 
 class LocationBloc extends Bloc<LocationEvents, LocationState> {
@@ -46,6 +45,8 @@ class LocationBloc extends Bloc<LocationEvents, LocationState> {
     var subscriptionToken = await _getSubscriptionToken.getToken();
     if (subscriptionToken != null && !subscriptionToken.isEmpty) {
       emit(state.copyWith(token: subscriptionToken));
+    }else {
+      emit(state.copyWith(isLoading: false, displaySubscriptionDialog: true));
     }
   }
 
