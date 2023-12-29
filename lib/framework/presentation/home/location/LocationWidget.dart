@@ -30,6 +30,7 @@ class _LocationWidget extends State<LocationWidget> {
   var isLocationEnable = false;
   var isSubscriptionDialogOpen = false;
   bool isBlocLoading = false;
+  bool isLocationTrackingEnable = false;
   bool hasTokenBeenHandled = false;
   Color iconColor = Colors.white; // Default color when token is empty
 
@@ -47,10 +48,46 @@ class _LocationWidget extends State<LocationWidget> {
         padding: const EdgeInsets.only(right: 16),
         child: GestureDetector(
           onTap: () {
-            requestLocationPermission(context);
+            if (isLocationTrackingEnable) {
+              _showStopTrackingDialog();
+            } else {
+              requestLocationPermission(context);
+            }
           },
           child: Icon(Icons.location_searching, color: iconColor),
         ));
+  }
+
+  void _showStopTrackingDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Stop Tracking'),
+          content: const Text('Do you want to stop location tracking?'),
+          actions: [
+            TextButton(
+              child: const Text('Cancel'),
+              onPressed: () {
+                Navigator.of(context).pop(); // Close the dialog
+              },
+            ),
+            TextButton(
+              child: const Text('Stop Tracking'),
+              onPressed: () {
+                // Add logic here to stop tracking
+                isLocationTrackingEnable = false;
+                _locationStreamSubscription?.cancel();
+                setState(() {
+                  iconColor = Colors.white;
+                });
+                Navigator.of(context).pop(); // Close the dialog
+              },
+            ),
+          ],
+        );
+      },
+    );
   }
 
   Future<void> requestLocationPermission(BuildContext context) async {
@@ -59,49 +96,75 @@ class _LocationWidget extends State<LocationWidget> {
 
     if (statusLocationPermission.isGranted) {
       startBackgroundLocation();
-      isLocationEnable = !isLocationEnable;
     } else if (statusLocationPermission.isDenied) {
       _showLocationPermissionDeniedDialog();
     }
   }
 
+  // Starts background location tracking
   startBackgroundLocation() async {
-    var locationWhenInUsePermissionStatus =
-        await Permission.locationWhenInUse.status;
-    var locationAlwaysStatus = await Permission.locationAlways.status;
-
-    if (locationWhenInUsePermissionStatus.isGranted ||
-        locationAlwaysStatus.isGranted) {
+    // Check if location permissions are granted
+    if (await _hasLocationPermissionGranted()) {
+      // Ensure the token is available
       _checkSubscriptionToken();
-      var locationSettings = _getLocationSettings();
-      // Cancel any existing subscription before starting a new one
-      _locationStreamSubscription?.cancel();
 
+      var locationSettings = _getLocationSettings();
+      // Cancel any existing location stream subscription
+      _cancelExistingLocationSubscription();
+
+      // Start listening to location updates
       _locationStreamSubscription =
           Geolocator.getPositionStream(locationSettings: locationSettings)
-              .listen((Position? position) {
-        if (position != null && !isSubscriptionDialogOpen) {
-          if (locationBloc.state.token.isEmpty) {
-            _onGetSubscriptionToken();
-          } else if (locationBloc.state.userCredentials == null) {
-            _onGetUserCredentials();
-          } else {
-            locationBloc.add(location_events.EventSaveLocation(UserLocation(
-                token: locationBloc.state.token,
-                userPhoneId:
-                    locationBloc.state.userCredentials?.user?.uid ?? "",
-                latitude: position.latitude,
-                longitude: position.longitude)));
+              .listen(_handleLocationUpdate);
+    } else {
+      // Handle the case when location permissions are not granted
+      _handlePermissionNotGranted();
+    }
+  }
 
-            ScaffoldMessenger.of(context)
-              ..removeCurrentSnackBar()
-              ..showSnackBar(SnackBar(
-                  content: Text(
-                      "Location: ${position.latitude}, ${position.longitude}")));
-          }
-        }
-      });
-    } else {}
+  // Checks if location permissions are granted
+  Future<bool> _hasLocationPermissionGranted() async {
+    var locationWhenInUseStatus = await Permission.locationWhenInUse.status;
+    var locationAlwaysStatus = await Permission.locationAlways.status;
+    return locationWhenInUseStatus.isGranted || locationAlwaysStatus.isGranted;
+  }
+
+  // Cancels the existing location stream subscription
+  void _cancelExistingLocationSubscription() {
+    _locationStreamSubscription?.cancel();
+  }
+
+  // Handles each location update
+  void _handleLocationUpdate(Position? position) {
+    if (position != null && !isSubscriptionDialogOpen) {
+      isLocationTrackingEnable = true;
+      _sendLocation(position);
+    }
+  }
+
+  void _sendLocation(Position position) {
+    if (locationBloc.state.token.isEmpty) {
+      _onGetSubscriptionToken();
+    } else if (locationBloc.state.userCredentials == null) {
+      _onGetUserCredentials();
+    } else {
+      locationBloc.add(location_events.EventSaveLocation(UserLocation(
+          token: locationBloc.state.token,
+          userPhoneId: locationBloc.state.userCredentials?.user?.uid ?? "",
+          latitude: position.latitude,
+          longitude: position.longitude)));
+
+      ScaffoldMessenger.of(context)
+        ..removeCurrentSnackBar()
+        ..showSnackBar(SnackBar(
+            content:
+                Text("Location: ${position.latitude}, ${position.longitude}")));
+    }
+  }
+
+  // Handle the case when permissions are not granted
+  void _handlePermissionNotGranted() {
+    _showLocationPermissionDeniedDialog();
   }
 
   void _showLocationPermissionDeniedDialog() {
