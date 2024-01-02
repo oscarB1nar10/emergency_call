@@ -3,16 +3,16 @@ import 'dart:io';
 
 import 'package:webview_flutter/webview_flutter.dart';
 
-import '../utility/Strings.dart';
+import '../../utility/Strings.dart';
 
-class WebViewApp extends StatefulWidget {
-  const WebViewApp({Key? key}) : super(key: key);
+class PrivacyPolicyWebView extends StatefulWidget {
+  const PrivacyPolicyWebView({Key? key}) : super(key: key);
 
   @override
-  State<WebViewApp> createState() => _WebViewAppState();
+  State<PrivacyPolicyWebView> createState() => _PrivacyPolicyWebViewState();
 }
 
-class _WebViewAppState extends State<WebViewApp> {
+class _PrivacyPolicyWebViewState extends State<PrivacyPolicyWebView> {
   late WebViewController _controller;
 
   // Add from here ...
