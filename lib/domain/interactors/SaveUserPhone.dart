@@ -14,6 +14,8 @@ class SaveUserPhone {
     var token = await _userPhoneRemote.saveUserPhone(userPhone);
     if (token != null && token.isNotEmpty) {
       await _sharedPreferencesDataSource.saveSubscriptionToken(token);
+    } else {
+      await _sharedPreferencesDataSource.saveSubscriptionToken("");
     }
     return token;
   }
