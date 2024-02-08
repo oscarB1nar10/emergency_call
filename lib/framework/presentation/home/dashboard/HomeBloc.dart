@@ -90,7 +90,7 @@ class HomeBloc extends Bloc<HomeEvents, HomeState> {
       EventSaveCountryDealCode event, Emitter<dynamic> emit) async {
     emit(state.copyWith(isLoading: true));
     await _saveCountryDialCode.saveCountryDialCode(event.country);
-    emit(state.copyWith(isLoading: false));
+    emit(state.copyWith(isLoading: false, country: event.country));
   }
 
   void _onGetCountryDialCode(
