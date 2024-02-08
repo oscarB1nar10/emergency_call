@@ -150,7 +150,7 @@ class _SubscriptionWidgetState extends State<SubscriptionWidget> {
 
   @override
   void dispose() {
-    _inAppPurchaseBloc.dispose();
+    //_inAppPurchaseBloc.dispose();
     super.dispose();
   }
 }

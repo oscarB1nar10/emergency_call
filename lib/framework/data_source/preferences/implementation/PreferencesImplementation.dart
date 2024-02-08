@@ -91,11 +91,12 @@ class PreferenceImplementation implements Preferences {
   Future getFirstTimeLogin() async {
     final prefs = await SharedPreferences.getInstance();
     try {
-      final isFirstTimeLogin =
-          prefs.getBool(SharedPreferencesHelper.firstTimeLogin);
-      return isFirstTimeLogin ?? false;
+      final hasLoggedInBefore = prefs.getBool(SharedPreferencesHelper.firstTimeLogin);
+      // If null, assume it's the first time; otherwise, use the stored value
+      return hasLoggedInBefore ?? true;
     } catch (e) {
-      return false;
+      // In case of an error, default to treating it as the first time
+      return true;
     }
   }
 }

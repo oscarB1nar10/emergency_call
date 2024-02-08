@@ -20,7 +20,7 @@ import 'package:unique_identifier/unique_identifier.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../utility/ErrorMessages.dart';
-import '../CountryIconWidget.dart';
+import '../country/CountryIconWidget.dart';
 import '../location/LocationWidget.dart';
 import 'HomeEvents.dart';
 import 'HomeState.dart';
@@ -251,13 +251,15 @@ class _HomeScreenWidget extends State<HomeScreenWidget> {
           CountryHelper.phoneNumberWithoutCountryCode(favoriteContact.phone);
 
       // Construct the message including the Google Maps URL
-      String message = Strings.getEmergencyDefaultMessage(favoriteContact.name, emergencyMessage);
+      String message = Strings.getEmergencyDefaultMessage(
+          favoriteContact.name, emergencyMessage);
 
       // Encode the entire message
       String encodedMessage = Uri.encodeComponent(message);
 
       // Construct the WhatsApp URL
-      String whatsappURLAndroid = "whatsapp://send?phone=$phoneCode$number&text=$encodedMessage";
+      String whatsappURLAndroid =
+          "whatsapp://send?phone=$phoneCode$number&text=$encodedMessage";
 
       if (await canLaunchUrl(Uri.parse(whatsappURLAndroid))) {
         await launchUrl(Uri.parse(whatsappURLAndroid));

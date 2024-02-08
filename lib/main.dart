@@ -19,7 +19,7 @@ Future<void> main() async {
   HttpOverrides.global = MyHttpOverrides();
   runApp(const MyApp());
   initFirebaseCrashlytics();
-  startServiceInAndroidPlatform();
+  //startServiceInAndroidPlatform();
 }
 
 initFirebaseCrashlytics() async {

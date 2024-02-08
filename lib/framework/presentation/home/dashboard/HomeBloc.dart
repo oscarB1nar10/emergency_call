@@ -90,7 +90,7 @@ class HomeBloc extends Bloc<HomeEvents, HomeState> {
       EventSaveCountryDealCode event, Emitter<dynamic> emit) async {
     emit(state.copyWith(isLoading: true));
     await _saveCountryDialCode.saveCountryDialCode(event.country);
-    emit(state.copyWith(isLoading: false));
+    emit(state.copyWith(isLoading: false, country: event.country));
   }
 
   void _onGetCountryDialCode(
@@ -179,10 +179,10 @@ class HomeBloc extends Bloc<HomeEvents, HomeState> {
     var isFirstTimeLogin = await _getFirstTimeLogin.getFirstTimeLogin();
     if (isFirstTimeLogin) {
       _saveFirstTimeLogin.saveFirstTimeLogin(false);
-      emit(state.copyWith(isLoading: false, isFirstTimeLogin: false));
-    } else {
-      _saveFirstTimeLogin.saveFirstTimeLogin(true);
       emit(state.copyWith(isLoading: false, isFirstTimeLogin: true));
+    } else {
+      //_saveFirstTimeLogin.saveFirstTimeLogin(false);
+      emit(state.copyWith(isLoading: false, isFirstTimeLogin: false));
     }
   }
 

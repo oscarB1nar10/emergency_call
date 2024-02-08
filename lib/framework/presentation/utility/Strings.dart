@@ -12,6 +12,7 @@ class Strings {
   static const countryDialCode = "+57";
   static const isoCode = "CO";
   static const privacyPolicyUrl = "https://oscarivanramtin.wixsite.com/emergencycall/about-1";
+  static const webpageUrl = "https://app.device-tracking.pro";
 
   static String messageToSend(String contactName, String contactNumber) {
     String message =
