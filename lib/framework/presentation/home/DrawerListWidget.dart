@@ -11,8 +11,11 @@ class DrawerListWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Access a more subtle color from the theme
-    final textColor = Colors.grey[800]; // A dark shade of grey
+    // Use theme colors and text styles
+    final theme = Theme.of(context);
+    final iconColor = theme.iconTheme.color; // Use the icon color from theme
+    final textColor =
+        theme.textTheme.bodyLarge?.color; // Use the text color from theme
 
     return Drawer(
       child: Column(
@@ -22,43 +25,42 @@ class DrawerListWidget extends StatelessWidget {
               padding: const EdgeInsets.only(top: 64),
               children: [
                 ListTile(
-                  leading: const Icon(Icons.card_membership, color: Colors.red),
-                  title: const Text('Subscription'),
+                  leading: Icon(Icons.card_membership, color: iconColor),
+                  title:
+                      Text('Subscription', style: TextStyle(color: textColor)),
                   onTap: () {
                     _navigateToSubscription(context);
                   },
-                  textColor: textColor,
                 ),
                 ListTile(
-                  leading: const Icon(Icons.track_changes, color: Colors.red),
-                  title: const Text('Web tracking'),
+                  leading: Icon(Icons.track_changes, color: iconColor),
+                  title:
+                      Text('Web tracking', style: TextStyle(color: textColor)),
                   onTap: () {
                     _launchInBrowser(Strings.webpageUrl);
                   },
-                  textColor: textColor,
                 ),
                 ListTile(
-                  leading: const Icon(Icons.privacy_tip, color: Colors.red),
-                  title: const Text('Privacy Policy'),
+                  leading: Icon(Icons.privacy_tip, color: iconColor),
+                  title: Text('Privacy Policy',
+                      style: TextStyle(color: textColor)),
                   onTap: () {
                     _navigateToPrivacyPolicy(context);
                   },
-                  textColor: textColor,
                 ),
               ],
             ),
           ),
           Container(
-            color: Colors.deepOrangeAccent,
+            color: theme.colorScheme.secondary, // Use a color from the theme
             child: Align(
               alignment: FractionalOffset.bottomCenter,
               child: ListTile(
-                leading: const Icon(Icons.logout, color: Colors.red),
-                title: const Text('Logout'),
+                leading: Icon(Icons.logout, color: iconColor),
+                title: Text('Logout', style: TextStyle(color: textColor)),
                 onTap: () {
                   _signOut(context);
                 },
-                textColor: textColor,
               ),
             ),
           ),
@@ -84,7 +86,7 @@ class DrawerListWidget extends StatelessWidget {
   void _navigateToPrivacyPolicy(BuildContext context) async {
     // Navigator.push returns a Future that completes after calling
     // Navigator.pop on the Selection Screen.
-    final result = await Navigator.push(
+    await Navigator.push(
       context,
       MaterialPageRoute(builder: (context) => const PrivacyPolicyWebView()),
     );
