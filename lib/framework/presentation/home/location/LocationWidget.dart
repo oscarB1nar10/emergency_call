@@ -32,7 +32,8 @@ class _LocationWidget extends State<LocationWidget> {
   bool isBlocLoading = false;
   bool isLocationTrackingEnable = false;
   bool hasTokenBeenHandled = false;
-  Color iconColor = Colors.white; // Default color when token is empty
+  bool locationDisclosureAccepted = false;
+  Color iconColor = Colors.blue;
 
   @override
   void initState() {
@@ -51,7 +52,7 @@ class _LocationWidget extends State<LocationWidget> {
             if (isLocationTrackingEnable) {
               _showStopTrackingDialog();
             } else {
-              requestLocationPermission(context);
+              _showLocationDisclosure();
             }
           },
           child: Icon(Icons.location_searching, color: iconColor),
@@ -63,23 +64,32 @@ class _LocationWidget extends State<LocationWidget> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text('Stop Tracking'),
-          content: const Text('Do you want to stop location tracking?'),
+          title: Text(
+            'Stop Tracking',
+            style:
+                Theme.of(context).textTheme.titleLarge, // Use themed text style
+          ),
+          content: Text(
+            'Do you want to stop location tracking?',
+            style: Theme.of(context).textTheme.bodyMedium,
+          ),
           actions: [
             TextButton(
-              child: const Text('Cancel'),
+              child:
+                  Text('Cancel', style: Theme.of(context).textTheme.labelLarge),
               onPressed: () {
                 Navigator.of(context).pop(); // Close the dialog
               },
             ),
             TextButton(
-              child: const Text('Stop Tracking'),
+              child: Text('Stop Tracking',
+                  style: Theme.of(context).textTheme.labelLarge),
               onPressed: () {
                 // Add logic here to stop tracking
                 isLocationTrackingEnable = false;
                 _locationStreamSubscription?.cancel();
                 setState(() {
-                  iconColor = Colors.white;
+                  iconColor = Theme.of(context).colorScheme.primary;
                 });
                 Navigator.of(context).pop(); // Close the dialog
               },
@@ -90,7 +100,19 @@ class _LocationWidget extends State<LocationWidget> {
     );
   }
 
-  Future<void> requestLocationPermission(BuildContext context) async {
+  _showLocationDisclosure() async {
+    if (locationDisclosureAccepted) {
+      requestLocationPermission();
+    }else {
+      // Show prominent disclosure for location permission
+      bool showDisclosure = await _showLocationPermissionDisclosure();
+      if (showDisclosure) {
+        requestLocationPermission();
+      }
+    }
+  }
+
+  Future<void> requestLocationPermission() async {
     var statusLocationPermission =
         await permissions.Permission.location.request();
 
@@ -99,6 +121,39 @@ class _LocationWidget extends State<LocationWidget> {
     } else if (statusLocationPermission.isDenied) {
       _showLocationPermissionDeniedDialog();
     }
+  }
+
+  Future<bool> _showLocationPermissionDisclosure() async {
+    final theme = Theme.of(context);
+    return await showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              title: Text('Location Permission',
+                  style: theme.textTheme.titleLarge),
+              content: Text(
+                'Under subscription this app collects location data to enable tracking it and can be query through a web platform, checking the last n locations, where n <= 100, even when the app is in the background, it still could send location data.',
+                style: theme.textTheme.bodyMedium,
+              ),
+              actions: <Widget>[
+                TextButton(
+                  child: Text('Decline', style: theme.textTheme.labelLarge),
+                  onPressed: () {
+                    Navigator.of(context).pop(false);
+                  },
+                ),
+                TextButton(
+                  child: Text('Allow', style: theme.textTheme.labelLarge),
+                  onPressed: () {
+                    locationDisclosureAccepted = true;
+                    Navigator.of(context).pop(true);
+                  },
+                ),
+              ],
+            );
+          },
+        ) ??
+        false; // Assuming the user declines if null is returned
   }
 
   // Starts background location tracking
@@ -172,20 +227,30 @@ class _LocationWidget extends State<LocationWidget> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text('Location Permission Denied'),
-          content: const Text(
-              'Without location access, certain features of the app may not work. Please grant permission from settings.'),
+          title: Text(
+            'Location Permission Denied',
+            style: Theme.of(context).textTheme.titleLarge,
+          ),
+          content: Text(
+            'Without location access, certain features of the app may not work. Please grant permission from settings.',
+            style: Theme.of(context).textTheme.bodyMedium,
+          ),
           actions: [
             TextButton(
-              child: const Text('Later'),
+              child: Text(
+                'Later',
+                style: Theme.of(context).textTheme.labelLarge,
+              ),
               onPressed: () {
                 Navigator.of(context).pop(); // Close the dialog
               },
             ),
             TextButton(
-              child: const Text('Open Settings'),
+              child: Text(
+                'Open Settings',
+                style: Theme.of(context).textTheme.labelLarge,
+              ),
               onPressed: () {
-                // Redirect to app settings
                 openAppSettings();
                 Navigator.of(context).pop(); // Close the dialog
               },
@@ -239,22 +304,23 @@ class _LocationWidget extends State<LocationWidget> {
       if (state.userCredentials != null && !hasTokenBeenHandled) {
         if (state.token.isNotEmpty) {
           hasTokenBeenHandled = true;
-          requestLocationPermission(context);
+          _showLocationDisclosure();
         }
       }
 
       // Check if the token has changed and update the icon color accordingly
       if (state.token.isNotEmpty &&
-          iconColor != Colors.lightBlue &&
+          iconColor != Colors.green[800] &&
           !state.displaySubscriptionDialog) {
         setState(() {
-          iconColor = Colors.lightBlue;
+          iconColor =
+              Colors.green[800] ?? Theme.of(context).colorScheme.onSecondary;
         });
       } else if (state.token.isEmpty &&
-          iconColor != Colors.white &&
+          iconColor != Theme.of(context).colorScheme.primary &&
           !state.displaySubscriptionDialog) {
         setState(() {
-          iconColor = Colors.white;
+          iconColor = Theme.of(context).colorScheme.primary;
         });
       }
 
@@ -283,12 +349,20 @@ class _LocationWidget extends State<LocationWidget> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text('Tracking Service Not Available'),
-          content: const Text(
-              'You have not acquired the tracking service in the subscription options. Would you like to subscribe?'),
+          title: Text(
+            'Tracking Service Not Available',
+            style: Theme.of(context).textTheme.titleLarge,
+          ),
+          content: Text(
+            'You have not acquired the tracking service in the subscription options. Would you like to subscribe?',
+            style: Theme.of(context).textTheme.bodyMedium,
+          ),
           actions: [
             TextButton(
-              child: const Text('Not Now'),
+              child: Text(
+                'Not Now',
+                style: Theme.of(context).textTheme.labelLarge,
+              ),
               onPressed: () {
                 Navigator.of(context).pop(); // Close the dialog
                 _locationStreamSubscription?.cancel();
@@ -298,7 +372,10 @@ class _LocationWidget extends State<LocationWidget> {
               },
             ),
             TextButton(
-              child: const Text('Subscribe Now'),
+              child: Text(
+                'Subscribe Now',
+                style: Theme.of(context).textTheme.labelLarge,
+              ),
               onPressed: () {
                 isSubscriptionDialogOpen = false;
                 Navigator.of(context).pop(); // Close the dialog
