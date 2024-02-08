@@ -5,6 +5,7 @@ import 'package:emergency_call/framework/presentation/utility/Strings.dart';
 import 'package:flutter/material.dart';
 
 import '../model/PersonalContact.dart';
+import '../utility/CustomTheme.dart';
 import 'CustomSearchDelegate.dart';
 
 class ContactsPage extends StatefulWidget {
@@ -25,6 +26,8 @@ class _ContactsPageState extends State<ContactsPage> {
 
   @override
   Widget build(BuildContext context) {
+    final ThemeData theme = Theme.of(context);
+
     return Scaffold(
         appBar: AppBar(
           title: (const Text(Strings.contacts)),
@@ -60,11 +63,17 @@ class _ContactsPageState extends State<ContactsPage> {
                             MemoryImage(contact.avatar ?? Uint8List(0)),
                       )
                     : CircleAvatar(
-                        child: Text(contact.initials()),
                         backgroundColor:
                             Theme.of(context).colorScheme.secondary,
+                        child: Text(
+                          contact.initials(),
+                          style: TextStyle(color: theme.colorScheme.onSecondary),
+                        ),
                       ),
-                title: Text(contact.displayName ?? ''),
+                title: Text(
+                  contact.displayName ?? '',
+                  style: theme.textTheme.bodyLarge, // using the highlight color,
+                ),
                 onTap: () {
                   goBackWithContactSelected(contact);
                 },

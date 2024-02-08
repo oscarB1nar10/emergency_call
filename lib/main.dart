@@ -11,6 +11,7 @@ import 'package:flutter_intro/flutter_intro.dart';
 import 'framework/presentation/home/dashboard/HomeScreenWidget.dart';
 import 'framework/presentation/home/subscription/InAppPurchaseBloc.dart';
 import 'framework/presentation/home/location/LocationBloc.dart';
+import 'framework/presentation/utility/CustomTheme.dart';
 import 'framework/presentation/utility/MyHttpOverrides.dart';
 
 Future<void> main() async {
@@ -19,7 +20,6 @@ Future<void> main() async {
   HttpOverrides.global = MyHttpOverrides();
   runApp(const MyApp());
   initFirebaseCrashlytics();
-  //startServiceInAndroidPlatform();
 }
 
 initFirebaseCrashlytics() async {
@@ -27,14 +27,6 @@ initFirebaseCrashlytics() async {
   await Firebase.initializeApp();
 
   //FirebaseCrashlytics.instance.crash();
-}
-
-startServiceInAndroidPlatform() async {
-  if (Platform.isAndroid) {
-    var methodChannel = const MethodChannel("com.emergency_call.messages");
-    String data = await methodChannel.invokeMethod("startProximityService");
-    print("service data: $data");
-  }
 }
 
 class MyApp extends StatelessWidget {
@@ -60,10 +52,8 @@ class MyApp extends StatelessWidget {
         maskColor: const Color.fromRGBO(0, 0, 0, .6),
         buttonTextBuilder: (order) => 'Next',
         child: MaterialApp(
-          title: 'Flutter Demo',
-          theme: ThemeData(
-            primarySwatch: Colors.red,
-          ),
+          title: 'EC',
+          theme: trackingAppTheme,
           initialRoute: '/home',
           routes: {
             '/home': (context) => const HomeScreenWidget(),
@@ -75,4 +65,3 @@ class MyApp extends StatelessWidget {
     );
   }
 }
-

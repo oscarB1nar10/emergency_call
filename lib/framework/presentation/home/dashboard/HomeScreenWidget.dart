@@ -42,6 +42,7 @@ class _HomeScreenWidget extends State<HomeScreenWidget> {
   var isFirstTimeLogin = false;
   bool isBlocLoading = false;
   bool showErrorBanner = false;
+  bool locationDisclosureAccepted = false;
   String errorMessage = "";
   StreamSubscription<dynamic>? _streamSubscription;
   StreamSubscription<dynamic>? _errorSubscription;
@@ -79,7 +80,13 @@ class _HomeScreenWidget extends State<HomeScreenWidget> {
       appBar: AppBar(
         title: const Text(Strings.emergencyCall),
         automaticallyImplyLeading: true,
-        actions: <Widget>[const CountryIconWidget(), _introLocationWidget()],
+        actions: <Widget>[
+          const CountryIconWidget(),
+          Padding(
+            padding: const EdgeInsets.only(right: 16.0),
+            child: _introLocationWidget(),
+          ),
+        ],
         centerTitle: true,
       ),
       body: Stack(children: [
@@ -150,8 +157,9 @@ class _HomeScreenWidget extends State<HomeScreenWidget> {
         key: key,
         onPressed: () {
           requestContactPermissions(context);
+          //_showLocationDisclosure();
         },
-        backgroundColor: Colors.red,
+        //backgroundColor: Colors.red,
         child: const Icon(Icons.add),
       ),
     );
@@ -160,9 +168,8 @@ class _HomeScreenWidget extends State<HomeScreenWidget> {
   Future<void> requestContactPermissions(BuildContext context) async {
     var statusContactsPermission =
         await permissions.Permission.contacts.request();
-    var statusLocationPermission =
-        await permissions.Permission.location.request();
 
+    // Handle contacts permission response
     if (statusContactsPermission.isGranted) {
       _navigateContactsPage();
     } else if (statusContactsPermission ==
@@ -171,34 +178,72 @@ class _HomeScreenWidget extends State<HomeScreenWidget> {
             permissions.PermissionStatus.permanentlyDenied) {
       _showPermissionExplanationDialog('Contacts');
     }
+  }
 
-    // Location permissions
-    if (statusLocationPermission.isGranted) {
-      // TODO("Handle negation of permissions through an explanation")
-    } else if (statusLocationPermission.isDenied) {
-      _showPermissionExplanationDialog('Location');
-    }
+  Future<bool> _showLocationPermissionDisclosure() async {
+    final theme = Theme.of(context);
+    return await showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              title: Text('Location Permission',
+                  style: theme.textTheme.titleLarge),
+              content: Text(
+                'Under subscription this app collects location data to enable tracking it and can be query through a web platform, checking the last n locations, where n <= 100, even when the app is in the background, it still could send location data.',
+                style: theme.textTheme.bodyMedium,
+              ),
+              actions: <Widget>[
+                TextButton(
+                  child: Text('Decline', style: theme.textTheme.labelLarge),
+                  onPressed: () {
+                    Navigator.of(context).pop(false);
+                  },
+                ),
+                TextButton(
+                  child: Text('Allow', style: theme.textTheme.labelLarge),
+                  onPressed: () {
+                    locationDisclosureAccepted = true;
+                    Navigator.of(context).pop(true);
+                  },
+                ),
+              ],
+            );
+          },
+        ) ??
+        false; // Assuming the user declines if null is returned
   }
 
   void _showPermissionExplanationDialog(String permissionName) {
     showDialog(
       context: context,
       builder: (BuildContext context) {
+        // Accessing theme data
+        final theme = Theme.of(context);
         return AlertDialog(
-          title: Text('$permissionName Permission Denied'),
+          title: Text(
+            '$permissionName Permission Denied',
+            style: theme.textTheme.titleLarge,
+          ),
           content: Text(
-              'The $permissionName permission is required for this feature to work. Please grant the permission for a better experience.'),
+            'The $permissionName permission is required for this feature to work. Please grant the permission for a better experience.',
+            style: theme.textTheme.bodyMedium,
+          ),
           actions: [
             TextButton(
-              child: const Text('Later'),
+              child: Text(
+                'Later',
+                style: theme.textTheme.labelLarge,
+              ),
               onPressed: () {
                 Navigator.of(context).pop();
               },
             ),
             TextButton(
-              child: const Text('Open Settings'),
+              child: Text(
+                'Open Settings',
+                style: theme.textTheme.labelLarge,
+              ),
               onPressed: () {
-                // Redirect to app settings
                 permissions.openAppSettings();
                 Navigator.of(context).pop();
               },
@@ -333,42 +378,52 @@ class _HomeScreenWidget extends State<HomeScreenWidget> {
           Center(
             child: ListView.builder(
               shrinkWrap: true,
-              // Let the ListView know how many items it needs to build.
               itemCount: state.favoriteContacts.length,
-              // Provide a builder function. This is where the magic happens.
-              // Convert each item into a widget based on the type of item it is.
               itemBuilder: (context, index) {
                 final item = state.favoriteContacts[index];
+                final theme = Theme.of(context); // Access the theme data
 
                 return Dismissible(
-                    key: UniqueKey(),
-                    // Show a red background as the item is swiped away.
-                    background: Container(
-                      color: Colors.deepOrangeAccent,
-                      child: const Padding(
-                        padding: EdgeInsets.all(16),
-                        child: Row(
-                          children: [
-                            Icon(Icons.delete, color: Colors.white),
-                            Text('Delete as emergency contact',
-                                style: TextStyle(color: Colors.white)),
-                          ],
-                        ),
+                  key: UniqueKey(),
+                  background: Container(
+                    color: theme.colorScheme.error,
+                    child: const Padding(
+                      padding: EdgeInsets.all(16),
+                      child: Row(
+                        children: [
+                          Icon(Icons.delete, color: Colors.white),
+                          Text(
+                            'Delete as emergency contact',
+                            style: TextStyle(
+                                color: Colors
+                                    .white), // Consider pulling a text style from the theme if needed
+                          ),
+                        ],
                       ),
                     ),
-                    // Provide a function that tells the app
-                    // what to do after an item has been swiped away.
-                    onDismissed: (direction) {
-                      homeBloc.add(EventDeleteFavoriteContact(item));
-                    },
-                    child: Card(
-                        margin: const EdgeInsets.symmetric(
-                            horizontal: 16, vertical: 8),
-                        child: ListTile(
-                          leading: const Icon(Icons.account_box, size: 48),
-                          title: Text(item.name),
-                          subtitle: Text(item.phone),
-                        )));
+                  ),
+                  onDismissed: (direction) {
+                    homeBloc.add(EventDeleteFavoriteContact(item));
+                  },
+                  child: Card(
+                    margin:
+                        const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    shape: theme.cardTheme.shape,
+                    // Use shape from theme's cardTheme
+                    child: ListTile(
+                      leading: Icon(Icons.account_box,
+                          size: 48, color: theme.iconTheme.color),
+                      title: Text(
+                        item.name,
+                        style: theme.textTheme.titleLarge,
+                      ),
+                      subtitle: Text(
+                        item.phone,
+                        style: theme.textTheme.bodyMedium,
+                      ),
+                    ),
+                  ),
+                );
               },
             ),
           )
@@ -407,13 +462,28 @@ class _HomeScreenWidget extends State<HomeScreenWidget> {
 
   Future<void> triggerEmergencySMS(
       List<FavoriteContact> favoriteContacts) async {
-    bool permissionsGranted =
-        await telephony.requestPhoneAndSmsPermissions ?? false;
+    _showLocationDisclosure(favoriteContacts);
+  }
 
-    var hasPermissionGranted = await location.hasPermission();
+  _showLocationDisclosure(List<FavoriteContact> favoriteContacts) async {
+    if (locationDisclosureAccepted) {
+      requestLocationPermission(favoriteContacts);
+    } else {
+      // Show prominent disclosure for location permission
+      bool showDisclosure = await _showLocationPermissionDisclosure();
+      if (showDisclosure) {
+        requestLocationPermission(favoriteContacts);
+      }
+    }
+  }
 
-    if (permissionsGranted &&
-        hasPermissionGranted == PermissionStatus.granted) {
+  Future<void> requestLocationPermission(
+      List<FavoriteContact> favoriteContacts) async {
+    var statusLocationPermission =
+        await permissions.Permission.location.request();
+
+    if (statusLocationPermission.isGranted) {
+      // Permission granted, proceed with app functionality
       var locationData = await location.getLocation();
 
       final url = Strings.getMapLocationUrl(locationData);
@@ -426,8 +496,10 @@ class _HomeScreenWidget extends State<HomeScreenWidget> {
         openWhatsApp(favoriteContacts, url);
       } else {
         // I am not connected
-        sendSms(favoriteContacts, url);
+        //sendSms(favoriteContacts, url);
       }
+    } else if (statusLocationPermission.isDenied) {
+      _showPermissionExplanationDialog('Location');
     }
   }
 

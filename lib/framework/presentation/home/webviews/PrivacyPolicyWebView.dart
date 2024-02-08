@@ -29,7 +29,7 @@ class _PrivacyPolicyWebViewState extends State<PrivacyPolicyWebView> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Terms and condictions'),
+        title: const Text('Privacy Policy'),
       ),
       body: WebViewWidget(
         controller: _controller,
