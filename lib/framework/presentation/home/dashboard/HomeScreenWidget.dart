@@ -157,35 +157,12 @@ class _HomeScreenWidget extends State<HomeScreenWidget> {
         key: key,
         onPressed: () {
           requestContactPermissions(context);
-          _showLocationDisclosure();
+          //_showLocationDisclosure();
         },
         //backgroundColor: Colors.red,
         child: const Icon(Icons.add),
       ),
     );
-  }
-
-  _showLocationDisclosure() async {
-    if (locationDisclosureAccepted) {
-      requestLocationPermission();
-    }else {
-      // Show prominent disclosure for location permission
-      bool showDisclosure = await _showLocationPermissionDisclosure();
-      if (showDisclosure) {
-        requestLocationPermission();
-      }
-    }
-  }
-
-  Future<void> requestLocationPermission() async {
-    var statusLocationPermission =
-    await permissions.Permission.location.request();
-
-    if (statusLocationPermission.isGranted) {
-      // Permission granted, proceed with app functionality
-    } else if (statusLocationPermission.isDenied) {
-      _showPermissionExplanationDialog('Location');
-    }
   }
 
   Future<void> requestContactPermissions(BuildContext context) async {
@@ -485,13 +462,28 @@ class _HomeScreenWidget extends State<HomeScreenWidget> {
 
   Future<void> triggerEmergencySMS(
       List<FavoriteContact> favoriteContacts) async {
-    bool permissionsGranted =
-        await telephony.requestPhoneAndSmsPermissions ?? false;
+    _showLocationDisclosure(favoriteContacts);
+  }
 
-    var hasPermissionGranted = await location.hasPermission();
+  _showLocationDisclosure(List<FavoriteContact> favoriteContacts) async {
+    if (locationDisclosureAccepted) {
+      requestLocationPermission(favoriteContacts);
+    } else {
+      // Show prominent disclosure for location permission
+      bool showDisclosure = await _showLocationPermissionDisclosure();
+      if (showDisclosure) {
+        requestLocationPermission(favoriteContacts);
+      }
+    }
+  }
 
-    if (permissionsGranted &&
-        hasPermissionGranted == PermissionStatus.granted) {
+  Future<void> requestLocationPermission(
+      List<FavoriteContact> favoriteContacts) async {
+    var statusLocationPermission =
+        await permissions.Permission.location.request();
+
+    if (statusLocationPermission.isGranted) {
+      // Permission granted, proceed with app functionality
       var locationData = await location.getLocation();
 
       final url = Strings.getMapLocationUrl(locationData);
@@ -506,6 +498,8 @@ class _HomeScreenWidget extends State<HomeScreenWidget> {
         // I am not connected
         //sendSms(favoriteContacts, url);
       }
+    } else if (statusLocationPermission.isDenied) {
+      _showPermissionExplanationDialog('Location');
     }
   }
 

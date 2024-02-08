@@ -46,7 +46,7 @@ class _LocationWidget extends State<LocationWidget> {
   @override
   Widget build(BuildContext context) {
     return Padding(
-        padding: const EdgeInsets.only(right: 16),
+        padding: const EdgeInsets.all(8),
         child: GestureDetector(
           onTap: () {
             if (isLocationTrackingEnable) {
