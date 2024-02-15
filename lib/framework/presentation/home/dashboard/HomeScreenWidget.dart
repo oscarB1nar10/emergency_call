@@ -10,6 +10,7 @@ import 'package:emergency_call/framework/presentation/utility/Countries.dart';
 import 'package:emergency_call/framework/presentation/utility/NetworkConnection.dart';
 import 'package:emergency_call/framework/presentation/utility/Strings.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_foreground_service/flutter_foreground_service.dart';
 import 'package:flutter_intro/flutter_intro.dart';
@@ -18,7 +19,6 @@ import 'package:permission_handler/permission_handler.dart' as permissions;
 import 'package:telephony/telephony.dart';
 import 'package:unique_identifier/unique_identifier.dart';
 import 'package:url_launcher/url_launcher.dart';
-
 import '../../utility/ErrorMessages.dart';
 import '../country/CountryIconWidget.dart';
 import '../location/LocationWidget.dart';
@@ -32,7 +32,10 @@ class HomeScreenWidget extends StatefulWidget {
   _HomeScreenWidget createState() => _HomeScreenWidget();
 }
 
-class _HomeScreenWidget extends State<HomeScreenWidget> {
+class _HomeScreenWidget extends State<HomeScreenWidget> with WidgetsBindingObserver {
+  static const platform =
+  MethodChannel('com.b1nar10.emergency_call2/locationService');
+
   late HomeBloc homeBloc;
   var personalContact = const PersonalContact();
   final telephony = Telephony.instance;
@@ -536,6 +539,28 @@ class _HomeScreenWidget extends State<HomeScreenWidget> {
         });
       }
     });
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+    switch (state) {
+      case AppLifecycleState.resumed:
+        // Stop location service if it is active
+        stopLocationService();
+        break;
+      default:
+        break;
+    }
+  }
+
+  Future<void> stopLocationService() async {
+    try {
+      final String result = await platform.invokeMethod('stopLocationService');
+      print(result); // Handle the result
+    } on PlatformException catch (e) {
+      print("Failed to stop location service: '${e.message}'.");
+    }
   }
 
   @override
