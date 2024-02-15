@@ -9,6 +9,8 @@ import 'package:emergency_call/framework/presentation/home/location/LocationBloc
 import 'package:emergency_call/framework/presentation/home/location/LocationEvents.dart'
     as location_events;
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_background_service/flutter_background_service.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -21,7 +23,11 @@ class LocationWidget extends StatefulWidget {
   State<StatefulWidget> createState() => _LocationWidget();
 }
 
-class _LocationWidget extends State<LocationWidget> {
+class _LocationWidget extends State<LocationWidget>
+    with WidgetsBindingObserver {
+  static const platform =
+      MethodChannel('com.b1nar10.emergency_call2/locationService');
+
   StreamSubscription? _streamSubscription;
   StreamSubscription? _locationStreamSubscription;
   Geolocator geolocator = Geolocator();
@@ -38,6 +44,7 @@ class _LocationWidget extends State<LocationWidget> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this); // Add the observer
     homeBloc = BlocProvider.of<HomeBloc>(context);
     locationBloc = BlocProvider.of<LocationBloc>(context, listen: false);
     _onRegisterBlocListener();
@@ -103,7 +110,7 @@ class _LocationWidget extends State<LocationWidget> {
   _showLocationDisclosure() async {
     if (locationDisclosureAccepted) {
       requestLocationPermission();
-    }else {
+    } else {
       // Show prominent disclosure for location permission
       bool showDisclosure = await _showLocationPermissionDisclosure();
       if (showDisclosure) {
@@ -117,7 +124,8 @@ class _LocationWidget extends State<LocationWidget> {
         await permissions.Permission.location.request();
 
     if (statusLocationPermission.isGranted) {
-      startBackgroundLocation();
+      //startBackgroundLocation();
+      initializeService();
     } else if (statusLocationPermission.isDenied) {
       _showLocationPermissionDeniedDialog();
     }
@@ -154,6 +162,23 @@ class _LocationWidget extends State<LocationWidget> {
           },
         ) ??
         false; // Assuming the user declines if null is returned
+  }
+
+  void initializeService() async {
+    final service = FlutterBackgroundService();
+
+    // Define the initialization of the service
+    await service.configure(
+      androidConfiguration: AndroidConfiguration(
+        onStart: startBackgroundLocation(),
+        autoStart: true,
+        isForegroundMode: true,
+      ),
+      iosConfiguration: IosConfiguration(),
+    );
+
+    // Start the service
+    service.startService();
   }
 
   // Starts background location tracking
@@ -208,6 +233,8 @@ class _LocationWidget extends State<LocationWidget> {
           userPhoneId: locationBloc.state.userCredentials?.user?.uid ?? "",
           latitude: position.latitude,
           longitude: position.longitude)));
+
+      startLocationService(locationBloc.state.token, locationBloc.state.userCredentials?.user?.uid ?? "");
 
       ScaffoldMessenger.of(context)
         ..removeCurrentSnackBar()
@@ -386,6 +413,45 @@ class _LocationWidget extends State<LocationWidget> {
         );
       },
     );
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+    switch (state) {
+      case AppLifecycleState.paused: // App is in the background
+        String token =
+            locationBloc.state.token; // Placeholder - replace with actual token
+        String userPhoneId = locationBloc.state.userCredentials?.user?.uid ??
+            ""; // Placeholder - replace with actual userPhoneId
+        startLocationService(token, userPhoneId);
+        break;
+      case AppLifecycleState.resumed: // App is in the foreground
+        // Handle foreground
+        stopLocationService();
+        break;
+      default:
+        break;
+    }
+  }
+
+  Future<void> startLocationService(String token, String userPhoneId) async {
+    try {
+      final String result = await platform.invokeMethod(
+          'startLocationService', {'token': token, 'userPhoneId': userPhoneId});
+      print(result); // Handle the result
+    } on PlatformException catch (e) {
+      print("Failed to start location service: '${e.message}'.");
+    }
+  }
+
+  Future<void> stopLocationService() async {
+    try {
+      final String result = await platform.invokeMethod('stopLocationService');
+      print(result); // Handle the result
+    } on PlatformException catch (e) {
+      print("Failed to stop location service: '${e.message}'.");
+    }
   }
 
   void _navigateToSubscriptionsScreen() {
