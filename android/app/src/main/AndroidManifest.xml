@@ -17,11 +17,6 @@
         android:usesCleartextTraffic="true"
         >
 
-        <service
-            android:name=".ProximitySensorService"
-            android:enabled="true"
-            android:exported="false" />
-
         <activity
             android:name=".MainActivity"
             android:configChanges="orientation|keyboardHidden|keyboard|screenSize|smallestScreenSize|locale|layoutDirection|fontScale|screenLayout|density|uiMode"
@@ -47,5 +42,7 @@
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />
+
+        <service android:name=".LocationService"/>
     </application>
 </manifest>
